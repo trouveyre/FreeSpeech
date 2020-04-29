@@ -1,5 +1,7 @@
-package freeSpeech
+package freeSpeech.textBox
 
+import freeSpeech.FreeSpeech
+import javafx.scene.input.MouseButton
 import javafx.scene.layout.AnchorPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
@@ -20,7 +22,7 @@ class TextBox(
 
 
     //FIELDS
-    private val _frame: Rectangle = Rectangle(x, 0.0, width, STRIP_HEIGHT).apply {
+    private val _frame: Rectangle = Rectangle(x, 0.0, width, FreeSpeech.STRIP_HEIGHT).apply {
         fill = Color.TRANSPARENT
         stroke = Color.TRANSPARENT
         hoverProperty().addListener { _, _, newValue ->
@@ -28,9 +30,13 @@ class TextBox(
                 hideFrame()
         }
         setOnMouseClicked {
-            if (!_frameLocked)
-                EditStage(this@TextBox)
-            it.consume()
+            when (it.button) {
+                MouseButton.SECONDARY -> {
+                    if (!_frameLocked)
+                        EditStage(this@TextBox)
+                }
+                else -> {}
+            }
         }
     }
     private var _frameLocked: Boolean = false
@@ -64,7 +70,7 @@ class TextBox(
 
 
     //METHODS
-    fun showFrame(color: Color = FRAME_DEFAULT_COLOR, height: Double = STRIP_HEIGHT) {
+    fun showFrame(color: Color = FRAME_DEFAULT_COLOR, height: Double = FreeSpeech.STRIP_HEIGHT) {
         if (!_frameLocked) {
             val parent = parent as? AnchorPane
             if (parent?.children?.contains(_frame) == false)

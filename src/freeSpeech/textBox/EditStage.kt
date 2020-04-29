@@ -1,4 +1,4 @@
-package freeSpeech
+package freeSpeech.textBox
 
 import javafx.geometry.Insets
 import javafx.geometry.Pos

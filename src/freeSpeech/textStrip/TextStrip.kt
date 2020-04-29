@@ -1,11 +1,15 @@
-package freeSpeech
+package freeSpeech.textStrip
 
+import freeSpeech.FreeSpeech
+import freeSpeech.textBox.EditStage
+import freeSpeech.textBox.TextBox
 import javafx.beans.property.Property
 import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Cursor
 import javafx.scene.canvas.Canvas
+import javafx.scene.input.MouseButton
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.util.Duration
@@ -13,7 +17,7 @@ import javafx.util.Duration
 
 class TextStrip(
         height: Double,
-        val offset: Double = APPLICATION_WIDTH / 5,
+        val offset: Double = FreeSpeech.WIDTH / 5,
         val baseline: Double = height / 2
 ): StackPane(), Iterable<Triple<String, Duration, Duration>> {
 
@@ -30,7 +34,7 @@ class TextStrip(
 
     //FIELDS
     private val _background: AnchorPane = AnchorPane()
-    private val _foreground: Canvas = Canvas(APPLICATION_WIDTH, height).apply {
+    private val _foreground: Canvas = Canvas(FreeSpeech.WIDTH, height).apply {
         background = Background(BackgroundFill(Color(0.0, 1.0, 0.0, 0.5), CornerRadii.EMPTY, Insets.EMPTY))
         graphicsContext2D.also {
             it.stroke = LINE_CURRENT_TIME_COLOR
@@ -68,12 +72,13 @@ class TextStrip(
             scene.cursor = if (newValue) Cursor.TEXT else Cursor.DEFAULT
         }
         setOnMouseClicked {
-            val x = _background.sceneToLocal(it.sceneX, it.sceneY).x
-            EditStage(write(
-                    TEXTBOX_DEFAULT_TEXT,
-                    duration(RECTANGLE_NEW_TEXT_WIDTH),
-                    duration(x)
-            ))
+            when (it.button) {
+                MouseButton.SECONDARY -> {
+                    val x = _background.sceneToLocal(it.sceneX, it.sceneY).x
+                    EditStage(write(TEXTBOX_DEFAULT_TEXT, duration(RECTANGLE_NEW_TEXT_WIDTH), duration(x)))
+                }
+                else -> {}
+            }
         }
     }
 

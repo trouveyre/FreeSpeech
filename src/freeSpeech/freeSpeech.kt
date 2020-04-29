@@ -1,5 +1,6 @@
 package freeSpeech
 
+import freeSpeech.textStrip.TextStrip
 import javafx.application.Application
 import javafx.geometry.Insets
 import javafx.geometry.Pos
@@ -16,27 +17,26 @@ import java.lang.Exception
 import java.net.URI
 
 
-const val APPLICATION_TITLE: String = "FreeSpeech"
-const val APPLICATION_WIDTH: Double = 1200.0
-const val APPLICATION_HEIGHT: Double = 700.0
-const val STRIP_HEIGHT: Double = 200.0
-
-
 fun toDoAlert() = Alert(Alert.AlertType.INFORMATION).apply {
     title = "Devs dialog"
     headerText = "Working on progress..."
 }.showAndWait()
 
 
-class FreeRead : Application() {
+class FreeSpeech : Application() {
 
     companion object {
+        const val TITLE: String = "FreeSpeech"
+        const val EXTENSION: String = "fsw"
+        const val WIDTH: Double = 1200.0
+        const val HEIGHT: Double = 700.0
+        const val STRIP_HEIGHT: Double = 200.0
+
         const val FILE_ERROR_OPENING_TITLE = "File ERROR"
         const val FILE_ERROR_OPENING_HEADER = "Opening desired file has failed."
         const val FILE_ERROR_OPENING_VIDEO = "Video not found."
         const val FILE_ERROR_SAVING_TITLE = "File ERROR"
         const val FILE_ERROR_SAVING_HEADER = "Saving file has failed."
-        const val FILE_EXTENSION: String = "frd"
         const val FILE_FORMAT_SEPARATOR: String = "::"
         const val FILE_SUCCESS_SAVING_TITLE: String = "File saved"
         const val FILE_SUCCESS_SAVING_HEADER: String = "The file has been properly saved."
@@ -47,12 +47,12 @@ class FreeRead : Application() {
     private lateinit var _rootStage: Stage
 
     private val _textStrip: TextStrip = TextStrip(STRIP_HEIGHT)
-    private val _video = VideoView(APPLICATION_WIDTH, APPLICATION_HEIGHT - STRIP_HEIGHT)
+    private val _video = VideoView()
 
     private var _currentFile: File? = null
         set(value) {
             field = value
-            _rootStage.title = APPLICATION_TITLE
+            _rootStage.title = TITLE
             if (value != null)
                 _rootStage.title += " *${value.name}*"
         }
@@ -136,12 +136,11 @@ class FreeRead : Application() {
 
     override fun start(primaryStage: Stage) {
         _rootStage = primaryStage.apply {
-            isResizable = false
-            width = APPLICATION_WIDTH
-            height = APPLICATION_HEIGHT
-            x = (Screen.getPrimary().bounds.width - APPLICATION_WIDTH) / 2
+            width = WIDTH
+            height = HEIGHT
+            x = (Screen.getPrimary().bounds.width - WIDTH) / 2
             y = 0.0
-            title = APPLICATION_TITLE
+            title = TITLE
             scene = Scene(VBox().apply {
                 alignment = Pos.TOP_LEFT
                 background = Background(BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY))
@@ -151,8 +150,16 @@ class FreeRead : Application() {
                         _textStrip
                 )
             })
+            widthProperty().addListener { _, _, newValue ->
+                _video.fitWidth = newValue.toDouble()
+            }
+            heightProperty().addListener { _, _, newValue ->
+                _video.fitHeight = newValue.toDouble() - STRIP_HEIGHT
+            }
         }
         _video.apply {
+            fitWidth = width
+            fitHeight = height
             onCloseVideo = {
                 _textStrip.currentTimeProperty.unbind()
             }
@@ -163,7 +170,6 @@ class FreeRead : Application() {
             }
             _rootStage.show()
         }
-        open(File("resources\\demo.frd"))
     }
 
     //NESTED CLASSES
@@ -190,7 +196,7 @@ class FreeRead : Application() {
                                             catch (e: Exception) {}
                                             extensionFilters.add(FileChooser.ExtensionFilter(
                                                     "FreeRead file",
-                                                    "*.$FILE_EXTENSION"
+                                                    "*.$EXTENSION"
                                             ))
                                         }.showOpenDialog(_rootStage)
                                         if (file != null)
@@ -220,7 +226,7 @@ class FreeRead : Application() {
                                             catch (e: Exception) {}
                                             extensionFilters.add(FileChooser.ExtensionFilter(
                                                     "FreeRead file",
-                                                    "*.$FILE_EXTENSION"
+                                                    "*.$EXTENSION"
                                             ))
                                         }.showSaveDialog(_rootStage)
                                         if (file != null)
@@ -288,5 +294,5 @@ class FreeRead : Application() {
 }
 
 fun main(vararg args: String) {
-    Application.launch(FreeRead::class.java, *args)
+    Application.launch(FreeSpeech::class.java, *args)
 }
