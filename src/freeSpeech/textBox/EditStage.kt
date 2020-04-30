@@ -8,7 +8,6 @@ import javafx.scene.control.Spinner
 import javafx.scene.control.TextArea
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
-import javafx.stage.Screen
 import javafx.stage.Stage
 import javafx.stage.StageStyle
 
@@ -57,7 +56,7 @@ class EditStage(val textBox: TextBox): Stage(StageStyle.UNDECORATED) {
         }
         setOnAction {
             val parent = textBox.parent as? AnchorPane
-            parent?.children?.remove(textBox.apply { hideFrame() })
+            parent?.children?.remove(textBox.apply { frame.hide() })
             close()
         }
     }
@@ -100,7 +99,7 @@ class EditStage(val textBox: TextBox): Stage(StageStyle.UNDECORATED) {
         setOnCloseRequest { onClose() }
         show()
 
-        textBox.showFrame(TEXTBOX_EDITING_COLOR)
+        textBox.frame.show(TEXTBOX_EDITING_COLOR)
         _textArea.requestFocus()
     }
 
@@ -112,6 +111,6 @@ class EditStage(val textBox: TextBox): Stage(StageStyle.UNDECORATED) {
     }
 
     private fun onClose() {
-        textBox.hideFrame()
+        textBox.frame.hide()
     }
 }

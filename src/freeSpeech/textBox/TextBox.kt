@@ -1,6 +1,8 @@
 package freeSpeech.textBox
 
-import freeSpeech.FreeSpeech
+import freeSpeech.setOnMouseMoveWhenPressed
+import freeSpeech.textStrip.TextStrip
+import javafx.scene.Cursor
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.AnchorPane
 import javafx.scene.paint.Color
@@ -12,87 +14,144 @@ class TextBox(
         text: String,
         width: Double,
         x: Double,
-        y: Double
-): Text(x, y, text) {
+        y: (TextStrip) -> Double,
+        var strip: TextStrip
+): Text(x, y(strip), text) {
 
     companion object {
         val FRAME_DEFAULT_COLOR: Color = Color.FORESTGREEN
         const val FRAME_FILL_COLOR_OPACITY: Double = 0.4
+        const val FRAME_BORDER_SIZE: Double = 15.0
+
+        val CURSOR_MOVE: Cursor = Cursor.MOVE
+        val CURSOR_SIZE: Cursor = Cursor.H_RESIZE
     }
 
 
     //FIELDS
-    private val _frame: Rectangle = Rectangle(x, 0.0, width, FreeSpeech.STRIP_HEIGHT).apply {
-        fill = Color.TRANSPARENT
-        stroke = Color.TRANSPARENT
-        hoverProperty().addListener { _, _, newValue ->
-            if (!(newValue || _frameLocked))
-                hideFrame()
-        }
-        setOnMouseClicked {
-            when (it.button) {
-                MouseButton.SECONDARY -> {
-                    if (!_frameLocked)
-                        EditStage(this@TextBox)
-                }
-                else -> {}
-            }
-            it.consume()
-        }
-    }
-    private var _frameLocked: Boolean = false
-
     private var _savedWidth: Double = width
 
 
     //PROPERTIES
+    val frame: Frame = Frame()
 
     var width: Double
         get() = layoutBounds.width
         set(value) {
             font = Font(font.name, value * font.size / layoutBounds.width)
-            _frame.width = value
+            frame.width = value
             _savedWidth = value
         }
 
 
     init {
         hoverProperty().addListener { _, _, newValue ->
-            if (!_frameLocked && newValue) {
-                showFrame()
-                _frameLocked = false
+            if (newValue) {
+                frame.show(lock = false)
             }
         }
         textProperty().addListener { _, _, _ ->
             this.width = _savedWidth
         }
         this.width = width
-    }
-
-
-    //METHODS
-    fun showFrame(color: Color = FRAME_DEFAULT_COLOR, height: Double = FreeSpeech.STRIP_HEIGHT) {
-        if (!_frameLocked) {
-            val parent = parent as? AnchorPane
-            if (parent?.children?.contains(_frame) == false)
-                parent.children.add(_frame)
-            if (color != _frame.stroke || height != _frame.height) {
-                _frame.also {
-                    it.x = x
-                    it.y = y - height / 2
-                    it.width = width
-                    it.height = height
-                }.apply {
-                    fill = Color(color.red, color.green, color.blue, FRAME_FILL_COLOR_OPACITY)
-                    stroke = color
-                }
-            }
-            _frameLocked = true
+        strip.heightProperty().addListener { _, _, _ ->
+            this.y = y(strip)
         }
     }
 
-    fun hideFrame() {
-        (parent as? AnchorPane)?.children?.remove(_frame)
-        _frameLocked = false
+
+    //INNER CLASSES
+    inner class Frame: Rectangle(x, 0.0, width, strip.height) {
+
+
+        //FIELDS
+        private val _rightBorder: Rectangle = Rectangle(FRAME_BORDER_SIZE, computeRightBorderHeight()).apply {
+            cursor = CURSOR_SIZE
+            fill = Color.TRANSPARENT
+            stroke = Color.TRANSPARENT
+            setOnMouseMoveWhenPressed { _, _, deltaX, _ ->
+                if (deltaX > FRAME_BORDER_SIZE - frame.width) {
+                    this@TextBox.width += deltaX
+                }
+            }
+            hoverProperty().addListener { _, _, newValue ->
+                if (!(newValue || _isLocked))
+                    hide()
+            }
+        }
+        private var _isLocked: Boolean = false
+
+
+        //PROPERTIES
+        val isLocked: Boolean
+            get() = _isLocked
+
+
+        init {
+            xProperty().bind(this@TextBox.xProperty())
+            widthProperty().addListener { _, _, newValue ->
+                if (newValue.toDouble() > FRAME_BORDER_SIZE - width)
+                    _rightBorder.x = computeRightBorderX()
+            }
+            heightProperty().addListener { _, _, _ ->
+                _rightBorder.height = computeRightBorderHeight()
+            }
+            xProperty().addListener { _, _, _ ->
+                _rightBorder.x = computeRightBorderX()
+            }
+            yProperty().addListener { _, _, _ ->
+                _rightBorder.y = computeRightBorderY()
+            }
+            _rightBorder.apply {
+                x = computeRightBorderX()
+                y = computeRightBorderY()
+            }
+            hoverProperty().addListener { _, _, newValue ->
+                if (!(newValue || _isLocked || _rightBorder.isHover))
+                    hide()
+            }
+            cursor = CURSOR_MOVE
+            setOnMouseClicked {
+                when (it.button) {
+                    MouseButton.SECONDARY -> {
+                        if (!frame.isLocked)
+                            EditStage(this@TextBox)
+                    }
+                    else -> {}
+                }
+                it.consume()
+            }
+            setOnMouseMoveWhenPressed { _, _, deltaX, _ ->
+                this@TextBox.x += deltaX
+            }
+        }
+
+
+        //METHODS
+        fun show(color: Color = FRAME_DEFAULT_COLOR, lock: Boolean = true) {
+            if (!_isLocked) {
+                _isLocked = lock
+                if (color != stroke) {
+                    fill = Color(color.red, color.green, color.blue, FRAME_FILL_COLOR_OPACITY)
+                    stroke = color
+                }
+                if (width != this@TextBox.width)
+                    width = this@TextBox.width
+                val parent = this@TextBox.parent as? AnchorPane
+                if (parent?.children?.contains(this) == false)
+                    parent.children?.addAll(this, _rightBorder)
+            }
+        }
+
+        fun hide() {
+            (this@TextBox.parent as? AnchorPane)?.children?.removeAll(_rightBorder, this)
+            _isLocked = false
+            if (this@TextBox.isHover)
+                show(lock = false)
+        }
+
+        private fun computeRightBorderHeight() = height
+        private fun computeRightBorderX() = x + width - _rightBorder.width / 2
+        private fun computeRightBorderY() = y
     }
 }

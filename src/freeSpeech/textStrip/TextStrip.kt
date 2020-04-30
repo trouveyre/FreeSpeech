@@ -17,11 +17,15 @@ import javafx.util.Duration
 
 class TextStrip(
         height: Double,
-        val offset: Double = FreeSpeech.WIDTH / 5,
-        val baseline: Double = height / 2
+        val offset: Double = FreeSpeech.DEFAULT_WIDTH / 5
 ): StackPane(), Iterable<Triple<String, Duration, Duration>> {
 
     companion object {
+        const val MIN_WIDTH: Double = FreeSpeech.MIN_WIDTH
+        const val MIN_HEIGHT: Double = 0.0
+        val MAX_WIDTH: Double = FreeSpeech.MAX_WIDTH
+        val MAX_HEIGHT: Double = FreeSpeech.MAX_HEIGHT
+
         const val DEFAULT_PIXEL_PER_MILLIS: Double = 0.3
 
         const val TEXTBOX_DEFAULT_TEXT: String = "new text here"
@@ -29,21 +33,31 @@ class TextStrip(
         val LINE_CURRENT_TIME_COLOR: Color = Color.RED
 
         const val RECTANGLE_NEW_TEXT_WIDTH: Double = 300.0
+
+        val CURSOR_NEW_TEXT: Cursor = Cursor.TEXT
     }
 
 
     //FIELDS
     private val _background: AnchorPane = AnchorPane()
-    private val _foreground: Canvas = Canvas(FreeSpeech.WIDTH, height).apply {
+    private val _foreground: Canvas = Canvas(FreeSpeech.DEFAULT_WIDTH, height).apply {
+        setMinSize(MIN_WIDTH, MIN_HEIGHT)
+        setMaxSize(MAX_WIDTH, MAX_HEIGHT)
         background = Background(BackgroundFill(Color(0.0, 1.0, 0.0, 0.5), CornerRadii.EMPTY, Insets.EMPTY))
-        graphicsContext2D.also {
-            it.stroke = LINE_CURRENT_TIME_COLOR
-            it.strokeLine(offset, 0.0, offset, height)
-        }
         isMouseTransparent = true
+            graphicsContext2D.also {
+                it.stroke = LINE_CURRENT_TIME_COLOR
+                it.strokeLine(offset, 0.0, offset, height)
+            }
+        heightProperty().addListener { _, _, _ ->
+            graphicsContext2D.also {
+                it.clearRect(0.0, 0.0, width, this.height)
+                it.stroke = LINE_CURRENT_TIME_COLOR
+                it.strokeLine(offset, 0.0, offset, this.height)
+            }
+        }
+        heightProperty().bind(this@TextStrip.heightProperty())
     }
-
-    private var recordStartPoint: Duration? = null
 
 
     //PROPERTIES
@@ -64,13 +78,11 @@ class TextStrip(
     init {
         alignment = Pos.TOP_LEFT
         background = Background(BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY))
+        cursor = CURSOR_NEW_TEXT
 
         children.addAll(_background, _foreground)
         currentTime = Duration.ZERO
 
-        hoverProperty().addListener { _, _, newValue ->
-            scene.cursor = if (newValue) Cursor.TEXT else Cursor.DEFAULT
-        }
         setOnMouseClicked {
             when (it.button) {
                 MouseButton.SECONDARY -> {
@@ -88,7 +100,7 @@ class TextStrip(
     fun pixelLength(of: Duration): Double = of.toMillis() * pixelPerMillis
 
     fun write(text: String, of: Duration, at: Duration): TextBox {
-        val result = TextBox(text, pixelLength(of), pixelLength(at), baseline)
+        val result = TextBox(text, pixelLength(of), pixelLength(at), { it.height / 2 },this)
         _background.children.add(result)
         return result
     }

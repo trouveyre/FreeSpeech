@@ -27,6 +27,11 @@ import java.net.URI
 class VideoView: StackPane() {
 
     companion object {
+        const val MIN_WIDTH: Double = FreeSpeech.MIN_WIDTH
+        const val MIN_HEIGHT: Double = 0.0
+        val MAX_WIDTH: Double = FreeSpeech.MAX_WIDTH
+        val MAX_HEIGHT: Double = FreeSpeech.MAX_HEIGHT
+
         const val BUTTON_OPEN_TEXT: String = "OPEN VIDEO"
 
         val BUTTON_PLAY_COLOR_BACKGROUND: Color = Color(0.0, 0.0, 0.0, 0.5)
@@ -113,6 +118,8 @@ class VideoView: StackPane() {
         }
     }
     private val _mediaView: MediaView = MediaView().apply {
+        setMinSize(MIN_WIDTH, MIN_HEIGHT)
+        setMaxSize(MAX_WIDTH, MAX_HEIGHT)
         isPreserveRatio = true
         isSmooth = true
         mediaPlayerProperty().addListener { _, _, newValue ->
@@ -122,6 +129,8 @@ class VideoView: StackPane() {
     }
     private val _sliderVideoTime: Slider by lazy {
         Slider(0.0, 0.0, 0.0).apply {
+            minWidth = MIN_WIDTH
+            maxWidth = MAX_WIDTH
             blockIncrement = 0.1
             disableProperty().bind(_mediaView.mediaPlayerProperty().isNull)
             orientation = Orientation.HORIZONTAL
@@ -133,6 +142,8 @@ class VideoView: StackPane() {
         }
     }
     private val _sliderVolume: Slider = Slider(0.0, 1.0, SLIDER_VOLUME_DEFAULT_VALUE).apply {
+        minHeight = MIN_HEIGHT
+        maxHeight = MAX_HEIGHT
         blockIncrement = 0.01
         orientation = Orientation.VERTICAL
     }
@@ -224,8 +235,9 @@ class VideoView: StackPane() {
                 _sliderVideoTime.also {
                     it.min = startTime.toMillis()
                     GlobalScope.launch {
-                        while (stopTime == Duration.UNKNOWN)
+                        while (stopTime == Duration.UNKNOWN) {
                             it.max = it.value + 5000
+                        }
                         it.max = stopTime.toMillis()
                     }
                 }

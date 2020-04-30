@@ -3,13 +3,13 @@ package freeSpeech
 import freeSpeech.textStrip.TextStrip
 import javafx.application.Application
 import javafx.geometry.Insets
+import javafx.geometry.Orientation
 import javafx.geometry.Pos
+import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.control.*
-import javafx.scene.layout.Background
-import javafx.scene.layout.BackgroundFill
-import javafx.scene.layout.CornerRadii
-import javafx.scene.layout.VBox
+import javafx.scene.input.MouseEvent
+import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.FileChooser
 import javafx.stage.Screen
@@ -27,14 +27,42 @@ fun toDoAlert() = Alert(Alert.AlertType.INFORMATION).apply {
 }.showAndWait()
 
 
+fun Node.setOnMouseMoveWhenPressed(
+        action: (eventOnPress: MouseEvent, eventOnDrag: MouseEvent, deltaX: Double, deltaY: Double) -> Unit
+) {
+    var x: Double? = null
+    var y: Double? = null
+    var onPress: MouseEvent? = null
+    val manage: (MouseEvent) -> Unit = {
+        val x0 = x
+        val y0 = y
+        val eventOnPress = onPress
+        if (x0 != null && y0 != null && eventOnPress != null)
+            action(eventOnPress, it, it.x - x0, it.y - y0)
+        x = it.x
+        y = it.y
+    }
+    setOnMousePressed {
+        x = it.x
+        y = it.y
+        onPress = it
+    }
+    setOnMouseDragged { manage(it) }
+}
+
+
 class FreeSpeech : Application() {
 
     companion object {
         const val TITLE: String = "FreeSpeech"
         const val EXTENSION: String = "fsw"
-        const val WIDTH: Double = 1200.0
-        const val HEIGHT: Double = 700.0
-        const val STRIP_HEIGHT: Double = 200.0
+        const val DEFAULT_WIDTH: Double = 1200.0
+        const val DEFAULT_HEIGHT: Double = 800.0
+        const val MIN_WIDTH: Double = 200.0
+        const val MIN_HEIGHT: Double = 400.0
+        val MAX_WIDTH: Double = Double.MAX_VALUE
+        val MAX_HEIGHT: Double = Double.MAX_VALUE
+        const val STRIP_MIN_HEIGHT: Double = 200.0
 
         const val FILE_ERROR_OPENING_TITLE = "File ERROR"
         const val FILE_ERROR_OPENING_HEADER = "Opening desired file has failed."
@@ -50,8 +78,16 @@ class FreeSpeech : Application() {
     //FIELDS
     private lateinit var _rootStage: Stage
 
-    private val _textStrip: TextStrip = TextStrip(STRIP_HEIGHT)
+    private val _textStrip: TextStrip = TextStrip(STRIP_MIN_HEIGHT)
     private val _video = VideoView()
+
+    private val _mainPane: SplitPane = SplitPane().apply {
+        background = Background(BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY))
+        orientation = Orientation.VERTICAL
+        items.addAll(_video, _textStrip)
+        setDividerPositions(0.8)
+        VBox.setVgrow(this, Priority.ALWAYS)
+    }
 
     private var _currentFile: File? = null
         set(value) {
@@ -146,30 +182,23 @@ class FreeSpeech : Application() {
 
     override fun start(primaryStage: Stage) {
         _rootStage = primaryStage.apply {
-            width = WIDTH
-            height = HEIGHT
-            x = (Screen.getPrimary().bounds.width - WIDTH) / 2
-            y = 0.0
+            width = DEFAULT_WIDTH
+            height = DEFAULT_HEIGHT
+            centerOnScreen()
             title = TITLE
             scene = Scene(VBox().apply {
                 alignment = Pos.TOP_LEFT
-                background = Background(BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY))
+                isFillWidth = true
                 children.addAll(
                         TopMenu(),
-                        _video,
-                        _textStrip
+                        _mainPane
                 )
             })
-            widthProperty().addListener { _, _, newValue ->
-                _video.fitWidth = newValue.toDouble()
-            }
-            heightProperty().addListener { _, _, newValue ->
-                _video.fitHeight = newValue.toDouble() - STRIP_HEIGHT
-            }
         }
         _video.apply {
             fitWidth = width
-            fitHeight = height
+            fitWidthProperty.bind(_rootStage.widthProperty())   //TODO
+//            fitHeight = height
             onCloseVideo = {
                 _textStrip.currentTimeProperty.unbind()
             }
