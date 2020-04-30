@@ -21,7 +21,7 @@ class TextBox(
     companion object {
         val FRAME_DEFAULT_COLOR: Color = Color.FORESTGREEN
         const val FRAME_FILL_COLOR_OPACITY: Double = 0.4
-        const val FRAME_BORDER_SIZE: Double = 15.0
+        const val FRAME_BORDER_SIZE: Double = 24.0
 
         val CURSOR_MOVE: Cursor = Cursor.MOVE
         val CURSOR_SIZE: Cursor = Cursor.H_RESIZE

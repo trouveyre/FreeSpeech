@@ -162,7 +162,7 @@ class VideoView: StackPane() {
             val millis = newValue.toMillis()
             if (_sliderVideoTime.value != millis)
                 _sliderVideoTime.value = millis
-            if (_mediaView.mediaPlayer?.currentTime ?: newValue != newValue)
+            if (_mediaView.mediaPlayer?.currentTime?.equals(newValue) == false)
                 _mediaView.mediaPlayer?.seek(newValue)
         }
     }
@@ -247,16 +247,12 @@ class VideoView: StackPane() {
                 this@VideoView.currentTime = currentTime
             }
             _timeUpdater = GlobalScope.launch {
-                try {
-                    while (true) {
-                        val time = _mediaView.mediaPlayer?.currentTime
-                        if (time != null) {
-                            currentTime = time
-                        }
+                val thisJob = _timeUpdater
+                while (thisJob === _timeUpdater) {
+                    val time = _mediaView.mediaPlayer?.currentTime
+                    if (time != null) {
+                        currentTime = time
                     }
-                }
-                catch (e: Exception) {
-                    e.printStackTrace()
                 }
             }
             onOpenVideo?.invoke(this@VideoView, oldMediaPlayer, _mediaView.mediaPlayer)
@@ -266,5 +262,4 @@ class VideoView: StackPane() {
             false
         }
     }
-    fun openVideoAsync(uri: URI): Deferred<Boolean> = GlobalScope.async { openVideo(uri) }
 }
