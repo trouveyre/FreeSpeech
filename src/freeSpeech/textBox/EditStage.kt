@@ -8,12 +8,11 @@ import javafx.scene.control.Spinner
 import javafx.scene.control.TextArea
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
+import javafx.stage.Screen
 import javafx.stage.Stage
 import javafx.stage.StageStyle
 
-class EditStage(
-        val textBox: TextBox
-): Stage(StageStyle.UNDECORATED) {
+class EditStage(val textBox: TextBox): Stage(StageStyle.UNDECORATED) {
 
     companion object {
         const val BUTTON_APPLY_TEXT: String = "APPLY"
@@ -97,21 +96,22 @@ class EditStage(
                     }
             )
         })
-        val location = textBox.localToScreen(textBox.boundsInLocal)
-        x = location.minX   //TODO better management
-        y = location.maxY   //TODO better management
+        centerOnScreen()
+        setOnCloseRequest { onClose() }
         show()
-        _textArea.requestFocus()
+
         textBox.showFrame(TEXTBOX_EDITING_COLOR)
-        setOnCloseRequest {
-            textBox.hideFrame()
-        }
+        _textArea.requestFocus()
     }
 
 
     //METHODS
     override fun close() {
-        textBox.hideFrame()
+        onClose()
         super.close()
+    }
+
+    private fun onClose() {
+        textBox.hideFrame()
     }
 }

@@ -20,8 +20,7 @@ import javafx.scene.text.FontWeight
 import javafx.scene.text.Text
 import javafx.stage.FileChooser
 import javafx.util.Duration
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.File
 import java.net.URI
 
@@ -204,41 +203,48 @@ class VideoView: StackPane() {
         _mediaView.mediaPlayer = null
     }
 
-    fun openVideo(uri: URI) {
-        val oldMediaPlayer = _mediaView.mediaPlayer
-        closeVideo()
-        _mediaView.mediaPlayer = MediaPlayer(Media(uri.toString())).apply {
-            setOnEndOfMedia {
-                seek(startTime)
-                pause()
+    fun openVideo(uri: URI): Boolean {
+        return try {
+            val oldMediaPlayer = _mediaView.mediaPlayer
+            closeVideo()
+            _mediaView.mediaPlayer = MediaPlayer(Media(uri.toString())).apply {
+                setOnEndOfMedia {
+                    seek(startTime)
+                    pause()
+                }
+                statusProperty().addListener { _, _, newValue ->
+                    _buttonPlayPause.text = when (newValue) {
+                        MediaPlayer.Status.PLAYING -> BUTTON_PLAY_TEXT_PAUSE
+                        MediaPlayer.Status.STOPPED -> BUTTON_PLAY_TEXT_REPLAY
+                        else -> BUTTON_PLAY_TEXT_PLAY
+                    }
+                }
+                volume = _sliderVolume.value
+                volumeProperty().bindBidirectional(_sliderVolume.valueProperty())
+                _sliderVideoTime.also {
+                    it.min = startTime.toMillis()
+                    GlobalScope.launch {
+                        while (stopTime == Duration.UNKNOWN)
+                            it.max = it.value + 5000
+                        it.max = stopTime.toMillis()
+                    }
+                }
+                this@VideoView.currentTime = currentTime
             }
-            statusProperty().addListener { _, _, newValue ->
-                _buttonPlayPause.text = when (newValue) {
-                    MediaPlayer.Status.PLAYING -> BUTTON_PLAY_TEXT_PAUSE
-                    MediaPlayer.Status.STOPPED -> BUTTON_PLAY_TEXT_REPLAY
-                    else -> BUTTON_PLAY_TEXT_PLAY
+            GlobalScope.launch {
+                while (_mediaView.mediaPlayer != null) {
+                    val mediaPlayer = _mediaView.mediaPlayer
+                    if (mediaPlayer != null) {
+                        currentTime = mediaPlayer.currentTime
+                    }
                 }
             }
-            volume = _sliderVolume.value
-            volumeProperty().bindBidirectional(_sliderVolume.valueProperty())
-            _sliderVideoTime.also {
-                it.min = startTime.toMillis()
-                GlobalScope.launch {
-                    while (stopTime == Duration.UNKNOWN)
-                        it.max = it.value + 5000
-                    it.max = stopTime.toMillis()
-                }
-            }
-            this@VideoView.currentTime = currentTime
+            onOpenVideo?.invoke(this@VideoView, oldMediaPlayer, _mediaView.mediaPlayer)
+            true
         }
-        GlobalScope.launch {    //TODO better work
-            while (_mediaView.mediaPlayer != null) {
-                val mediaPlayer = _mediaView.mediaPlayer
-                if (mediaPlayer != null) {
-                    currentTime = mediaPlayer.currentTime
-                }
-            }
+        catch (e: Exception) {
+            false
         }
-        onOpenVideo?.invoke(this, oldMediaPlayer, _mediaView.mediaPlayer)
     }
+    fun openVideoAsync(uri: URI): Deferred<Boolean> = GlobalScope.async { openVideo(uri) }
 }

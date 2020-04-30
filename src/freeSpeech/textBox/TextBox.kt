@@ -37,6 +37,7 @@ class TextBox(
                 }
                 else -> {}
             }
+            it.consume()
         }
     }
     private var _frameLocked: Boolean = false

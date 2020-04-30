@@ -6,14 +6,18 @@ import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.*
-import javafx.scene.layout.*
+import javafx.scene.layout.Background
+import javafx.scene.layout.BackgroundFill
+import javafx.scene.layout.CornerRadii
+import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.stage.FileChooser
 import javafx.stage.Screen
 import javafx.stage.Stage
 import javafx.util.Duration
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import java.io.File
-import java.lang.Exception
 import java.net.URI
 
 
@@ -59,20 +63,26 @@ class FreeSpeech : Application() {
 
 
     //METHODS
-    private fun openVideoSafely(reference: File, paths: Array<String>, testNumber: Int = 0) {
-        try {
-            _video.openVideo(reference.toURI().resolve(paths[testNumber]))
+    private fun openVideoQuickly(reference: File, paths: Array<String>) = runBlocking { //TODO should be faster
+        val success = Channel<Boolean>()
+        val opening = launch {
+            paths.map {
+                launch {
+                    val t = reference.toURI().resolve(it)
+                    if (_video.openVideo(t)) {
+                        success.send(true)
+                    }
+                }
+            }.joinAll()
+            success.send(false)
         }
-        catch (e: Exception) {
-            if (testNumber < paths.size - 1)
-                openVideoSafely(reference, paths, testNumber + 1)
-            else
-                Alert(Alert.AlertType.ERROR).apply {
-                    title = FILE_ERROR_OPENING_TITLE
-                    headerText = FILE_ERROR_OPENING_VIDEO
-                    contentText = e.message
-                }.showAndWait()
-        }
+        if (success.receive())
+            opening.cancel()
+        else
+            Alert(Alert.AlertType.ERROR).apply {
+                title = FILE_ERROR_OPENING_TITLE
+                headerText = FILE_ERROR_OPENING_VIDEO
+            }.showAndWait()
     }
     fun open(file: File) {
         _textStrip.clear()
@@ -80,7 +90,7 @@ class FreeSpeech : Application() {
         try {
             file.forEachLine {
                 if (isFirstLine) {
-                    openVideoSafely(file, it.split(FILE_FORMAT_SEPARATOR).toTypedArray())
+                    openVideoQuickly(file, it.split(FILE_FORMAT_SEPARATOR).toTypedArray())
                     isFirstLine = false
                 }
                 else {
