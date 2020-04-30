@@ -50,6 +50,8 @@ class VideoView: StackPane() {
 
 
     //FIELDS
+    private var _timeUpdater: Job? = null
+
     private val _buttonOpen = Button(BUTTON_OPEN_TEXT).apply {
         setOnAction {
             val fileChooser = FileChooser().apply {
@@ -206,6 +208,7 @@ class VideoView: StackPane() {
 
     //METHODS
     fun closeVideo() {
+        _timeUpdater?.cancel()
         _mediaView.mediaPlayer?.apply {
             volumeProperty().unbindBidirectional(_sliderVolume.valueProperty())
             dispose()
@@ -243,12 +246,17 @@ class VideoView: StackPane() {
                 }
                 this@VideoView.currentTime = currentTime
             }
-            GlobalScope.launch {
-                while (_mediaView.mediaPlayer != null) {
-                    val mediaPlayer = _mediaView.mediaPlayer
-                    if (mediaPlayer != null) {
-                        currentTime = mediaPlayer.currentTime
+            _timeUpdater = GlobalScope.launch {
+                try {
+                    while (true) {
+                        val time = _mediaView.mediaPlayer?.currentTime
+                        if (time != null) {
+                            currentTime = time
+                        }
                     }
+                }
+                catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
             onOpenVideo?.invoke(this@VideoView, oldMediaPlayer, _mediaView.mediaPlayer)

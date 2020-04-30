@@ -22,7 +22,7 @@ class TextStrip(
 
     companion object {
         const val MIN_WIDTH: Double = FreeSpeech.MIN_WIDTH
-        const val MIN_HEIGHT: Double = 0.0
+        const val MIN_HEIGHT: Double = 1.0
         val MAX_WIDTH: Double = FreeSpeech.MAX_WIDTH
         val MAX_HEIGHT: Double = FreeSpeech.MAX_HEIGHT
 

@@ -80,7 +80,6 @@ class FreeSpeech : Application() {
 
     private val _textStrip: TextStrip = TextStrip(STRIP_MIN_HEIGHT)
     private val _video = VideoView()
-
     private val _mainPane: SplitPane = SplitPane().apply {
         background = Background(BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY))
         orientation = Orientation.VERTICAL
@@ -88,6 +87,8 @@ class FreeSpeech : Application() {
         setDividerPositions(0.8)
         VBox.setVgrow(this, Priority.ALWAYS)
     }
+
+
 
     private var _currentFile: File? = null
         set(value) {
@@ -209,6 +210,10 @@ class FreeSpeech : Application() {
             }
             _rootStage.show()
         }
+    }
+
+    override fun stop() {
+        _video.closeVideo()
     }
 
     //NESTED CLASSES
