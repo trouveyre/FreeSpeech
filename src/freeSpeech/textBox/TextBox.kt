@@ -137,6 +137,8 @@ class TextBox(
                 }
                 if (width != this@TextBox.width)
                     width = this@TextBox.width
+                if (height != this@TextBox.strip.height)
+                    height = this@TextBox.strip.height
                 val parent = this@TextBox.parent as? AnchorPane
                 if (parent?.children?.contains(this) == false)
                     parent.children?.addAll(this, _rightBorder)
