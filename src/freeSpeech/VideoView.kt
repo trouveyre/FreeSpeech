@@ -23,6 +23,7 @@ import javafx.util.Duration
 import kotlinx.coroutines.*
 import java.io.File
 import java.net.URI
+import kotlin.coroutines.CoroutineContext
 
 class VideoView: StackPane() {
 
@@ -239,14 +240,16 @@ class VideoView: StackPane() {
                     it.min = startTime.toMillis()
                     GlobalScope.launch {
                         while (stopTime == Duration.UNKNOWN) {
-                            it.max = it.value + 5000
+                            val value = it.value
+                            if (value > it.max)
+                                it.max = value
                         }
                         it.max = stopTime.toMillis()
                     }
                 }
                 this@VideoView.currentTime = currentTime
             }
-            _timeUpdater = GlobalScope.launch {
+            _timeUpdater = GlobalScope.launch(start = CoroutineStart.LAZY) {
                 val thisJob = _timeUpdater
                 while (thisJob === _timeUpdater) {
                     val time = _mediaView.mediaPlayer?.currentTime
@@ -255,6 +258,7 @@ class VideoView: StackPane() {
                     }
                 }
             }
+            _timeUpdater?.start()
             onOpenVideo?.invoke(this@VideoView, oldMediaPlayer, _mediaView.mediaPlayer)
             true
         }
