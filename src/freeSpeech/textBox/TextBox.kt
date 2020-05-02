@@ -69,10 +69,12 @@ class TextBox(
             cursor = CURSOR_SIZE
             fill = Color.TRANSPARENT
             stroke = Color.TRANSPARENT
-            setOnMouseMoveWhenPressed { _, _, deltaX, _ ->
+            setOnMouseMoveWhenPressed { eventOnPress, eventOnMove, deltaX, _ ->
                 if (deltaX > FRAME_BORDER_SIZE - frame.width) {
                     this@TextBox.width += deltaX
                 }
+                eventOnPress.consume()
+                eventOnMove.consume()
             }
             hoverProperty().addListener { _, _, newValue ->
                 if (!(newValue || _isLocked))
@@ -121,8 +123,10 @@ class TextBox(
                 }
                 it.consume()
             }
-            setOnMouseMoveWhenPressed { _, _, deltaX, _ ->
+            setOnMouseMoveWhenPressed { eventOnPress, eventOnMove, deltaX, _ ->
                 this@TextBox.x += deltaX
+                eventOnPress.consume()
+                eventOnMove.consume()
             }
         }
 

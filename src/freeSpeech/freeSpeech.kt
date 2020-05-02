@@ -12,7 +12,6 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.FileChooser
-import javafx.stage.Screen
 import javafx.stage.Stage
 import javafx.util.Duration
 import kotlinx.coroutines.*
@@ -62,7 +61,9 @@ class FreeSpeech : Application() {
         const val MIN_HEIGHT: Double = 400.0
         val MAX_WIDTH: Double = Double.MAX_VALUE
         val MAX_HEIGHT: Double = Double.MAX_VALUE
-        const val STRIP_MIN_HEIGHT: Double = 200.0
+        const val STRIP_DEFAULT_HEIGHT: Double = 200.0
+        const val INFO_BAR_HEIGHT: Double = 30.0
+        const val TIME_BAR_OFFSET: Double = MIN_WIDTH
 
         const val FILE_ERROR_OPENING_TITLE = "File ERROR"
         const val FILE_ERROR_OPENING_HEADER = "Opening desired file has failed."
@@ -78,9 +79,14 @@ class FreeSpeech : Application() {
     //FIELDS
     private lateinit var _rootStage: Stage
 
-    private val _textStrip: TextStrip = TextStrip(STRIP_MIN_HEIGHT)
     private val _video = VideoView()
-    private val _mainPane: SplitPane = SplitPane().apply {
+    private val _textStrip: TextStrip = TextStrip(STRIP_DEFAULT_HEIGHT, TIME_BAR_OFFSET).apply {
+        currentTimeProperty.addListener { _, _, newValue ->
+            if (_video.currentTime != newValue)
+                _video.currentTime = newValue
+        }
+    }
+    private val _mainPane = SplitPane().apply {
         background = Background(BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY))
         orientation = Orientation.VERTICAL
         items.addAll(_video, _textStrip)
@@ -88,7 +94,13 @@ class FreeSpeech : Application() {
         VBox.setVgrow(this, Priority.ALWAYS)
     }
 
-
+    private val _infoBar = InfoBar(INFO_BAR_HEIGHT, TIME_BAR_OFFSET).apply {
+        currentTimeProperty.addListener { _, _, newValue ->
+            if (_video.currentTime != newValue)
+                _video.currentTime = newValue
+        }
+//        offsetProperty.bind(_textStrip.offsetProperty)
+    }
 
     private var _currentFile: File? = null
         set(value) {
@@ -100,6 +112,41 @@ class FreeSpeech : Application() {
 
 
     //METHODS
+    override fun start(primaryStage: Stage) {
+        _rootStage = primaryStage.apply {
+            width = DEFAULT_WIDTH
+            height = DEFAULT_HEIGHT
+            centerOnScreen()
+            title = TITLE
+            scene = Scene(VBox().apply {
+                alignment = Pos.TOP_LEFT
+                isFillWidth = true
+                children.addAll(
+                        topMenu(),
+                        _mainPane
+//                        _infoBar
+                )
+            })
+        }
+        _video.apply {
+            fitWidth = width
+            fitWidthProperty.bind(_rootStage.widthProperty())   //TODO
+            onOpenVideo = { _, newPlayer ->
+                newPlayer?.currentTimeProperty()?.addListener { _, _, newValue ->
+                    if (_textStrip.currentTime != newValue)
+                        _textStrip.currentTime = newValue
+//                    if (_infoBar.currentTime != newValue)
+//                        _infoBar.currentTime = newValue
+                }
+            }
+        }
+        _rootStage.show()
+    }
+
+    override fun stop() {
+        _video.closeVideo()
+    }
+
     private fun openVideoQuickly(reference: File, paths: Array<String>) = runBlocking { //TODO should be faster
         val success = Channel<Boolean>()
         val opening = launch {
@@ -181,159 +228,120 @@ class FreeSpeech : Application() {
         }
     }
 
-    override fun start(primaryStage: Stage) {
-        _rootStage = primaryStage.apply {
-            width = DEFAULT_WIDTH
-            height = DEFAULT_HEIGHT
-            centerOnScreen()
-            title = TITLE
-            scene = Scene(VBox().apply {
-                alignment = Pos.TOP_LEFT
-                isFillWidth = true
-                children.addAll(
-                        TopMenu(),
-                        _mainPane
-                )
-            })
-        }
-        _video.apply {
-            fitWidth = width
-            fitWidthProperty.bind(_rootStage.widthProperty())   //TODO
-//            fitHeight = height
-            onCloseVideo = {
-                _textStrip.currentTimeProperty.unbind()
-            }
-            onOpenVideo = { _, newPlayer ->
-                if (newPlayer != null) {
-                    _textStrip.currentTimeProperty.bind(currentTimeProperty)
+    private fun topMenu() = MenuBar().apply {
+        menus.addAll(
+                Menu("File").apply {
+                    items.addAll(
+                            MenuItem("New").apply {
+                                setOnAction {
+                                    _currentFile = null
+                                    _video.closeVideo()
+                                    _textStrip.clear()
+                                }
+                            },
+                            MenuItem("Open...").apply {
+                                setOnAction {
+                                    val file = FileChooser().apply {
+                                        title = "Open FreeRead file"
+                                        try {
+                                            initialDirectory = File(System.getProperty("user.dir"))
+                                        }
+                                        catch (e: Exception) {}
+                                        extensionFilters.add(FileChooser.ExtensionFilter(
+                                                "FreeRead file",
+                                                "*.$EXTENSION"
+                                        ))
+                                    }.showOpenDialog(_rootStage)
+                                    if (file != null)
+                                        open(file)
+                                }
+                            },
+                            MenuItem("Open Recent").apply {
+                                setOnAction {
+                                    toDoAlert()
+                                }
+                            },
+                            SeparatorMenuItem(),
+                            MenuItem("Save").apply {
+                                setOnAction {
+                                    val file = _currentFile
+                                    if (file != null)
+                                        save(file)
+                                }
+                            },
+                            MenuItem("Save As...").apply {
+                                setOnAction {
+                                    val file = FileChooser().apply {
+                                        title = "Save As FreeRead file"
+                                        try {
+                                            initialDirectory = File(System.getProperty("user.dir"))
+                                        }
+                                        catch (e: Exception) {}
+                                        extensionFilters.add(FileChooser.ExtensionFilter(
+                                                "FreeRead file",
+                                                "*.$EXTENSION"
+                                        ))
+                                    }.showSaveDialog(_rootStage)
+                                    if (file != null)
+                                        save(file)
+                                }
+                            },
+                            SeparatorMenuItem(),
+                            MenuItem("Preferences").apply {
+                                setOnAction {
+                                    toDoAlert()
+                                }
+                            },
+                            SeparatorMenuItem(),
+                            MenuItem("Quit").apply {
+                                setOnAction {
+                                    _rootStage.close()
+                                }
+                            }
+                    )
+                },
+                Menu("Edit").apply {
+                    items.addAll(
+                            MenuItem("Undo").apply {
+                                setOnAction {
+                                    toDoAlert()
+                                }
+                            },
+                            MenuItem("Redo").apply {
+                                setOnAction {
+                                    toDoAlert()
+                                }
+                            },
+                            SeparatorMenuItem(),
+                            MenuItem("Cut").apply {
+                                setOnAction {
+                                    toDoAlert()
+                                }
+                            },
+                            MenuItem("Copy").apply {
+                                setOnAction {
+                                    toDoAlert()
+                                }
+                            },
+                            MenuItem("Paste").apply {
+                                setOnAction {
+                                    toDoAlert()
+                                }
+                            },
+                            MenuItem("Delete").apply {
+                                setOnAction {
+                                    toDoAlert()
+                                }
+                            },
+                            SeparatorMenuItem(),
+                            MenuItem("Select All").apply {
+                                setOnAction {
+                                    toDoAlert()
+                                }
+                            }
+                    )
                 }
-            }
-            _rootStage.show()
-        }
-    }
-
-    override fun stop() {
-        _video.closeVideo()
-    }
-
-    //NESTED CLASSES
-    inner class TopMenu: MenuBar() {
-
-        init {
-            menus.addAll(
-                    Menu("File").apply {
-                        items.addAll(
-                                MenuItem("New").apply {
-                                    setOnAction {
-                                        _currentFile = null
-                                        _video.closeVideo()
-                                        _textStrip.clear()
-                                    }
-                                },
-                                MenuItem("Open...").apply {
-                                    setOnAction {
-                                        val file = FileChooser().apply {
-                                            title = "Open FreeRead file"
-                                            try {
-                                                initialDirectory = File(System.getProperty("user.dir"))
-                                            }
-                                            catch (e: Exception) {}
-                                            extensionFilters.add(FileChooser.ExtensionFilter(
-                                                    "FreeRead file",
-                                                    "*.$EXTENSION"
-                                            ))
-                                        }.showOpenDialog(_rootStage)
-                                        if (file != null)
-                                            open(file)
-                                    }
-                                },
-                                MenuItem("Open Recent").apply {
-                                    setOnAction {
-                                        toDoAlert()
-                                    }
-                                },
-                                SeparatorMenuItem(),
-                                MenuItem("Save").apply {
-                                    setOnAction {
-                                        val file = _currentFile
-                                        if (file != null)
-                                            save(file)
-                                    }
-                                },
-                                MenuItem("Save As...").apply {
-                                    setOnAction {
-                                        val file = FileChooser().apply {
-                                            title = "Save As FreeRead file"
-                                            try {
-                                                initialDirectory = File(System.getProperty("user.dir"))
-                                            }
-                                            catch (e: Exception) {}
-                                            extensionFilters.add(FileChooser.ExtensionFilter(
-                                                    "FreeRead file",
-                                                    "*.$EXTENSION"
-                                            ))
-                                        }.showSaveDialog(_rootStage)
-                                        if (file != null)
-                                            save(file)
-                                    }
-                                },
-                                SeparatorMenuItem(),
-                                MenuItem("Preferences").apply {
-                                    setOnAction {
-                                        toDoAlert()
-                                    }
-                                },
-                                SeparatorMenuItem(),
-                                MenuItem("Quit").apply {
-                                    setOnAction {
-                                        _rootStage.close()
-                                    }
-                                }
-                        )
-                    },
-                    Menu("Edit").apply {
-                        items.addAll(
-                                MenuItem("Undo").apply {
-                                    setOnAction {
-                                        toDoAlert()
-                                    }
-                                },
-                                MenuItem("Redo").apply {
-                                    setOnAction {
-                                        toDoAlert()
-                                    }
-                                },
-                                SeparatorMenuItem(),
-                                MenuItem("Cut").apply {
-                                    setOnAction {
-                                        toDoAlert()
-                                    }
-                                },
-                                MenuItem("Copy").apply {
-                                    setOnAction {
-                                        toDoAlert()
-                                    }
-                                },
-                                MenuItem("Paste").apply {
-                                    setOnAction {
-                                        toDoAlert()
-                                    }
-                                },
-                                MenuItem("Delete").apply {
-                                    setOnAction {
-                                        toDoAlert()
-                                    }
-                                },
-                                SeparatorMenuItem(),
-                                MenuItem("Select All").apply {
-                                    setOnAction {
-                                        toDoAlert()
-                                    }
-                                }
-                        )
-                    }
-            )
-        }
+        )
     }
 }
 

@@ -1,9 +1,12 @@
 package freeSpeech.textStrip
 
 import freeSpeech.FreeSpeech
+import freeSpeech.setOnMouseMoveWhenPressed
 import freeSpeech.textBox.EditStage
 import freeSpeech.textBox.TextBox
+import javafx.beans.property.DoubleProperty
 import javafx.beans.property.Property
+import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.Insets
 import javafx.geometry.Pos
@@ -17,7 +20,7 @@ import javafx.util.Duration
 
 class TextStrip(
         height: Double,
-        val offset: Double = FreeSpeech.DEFAULT_WIDTH / 5
+        timeLinePosition: Double
 ): StackPane(), Iterable<Triple<String, Duration, Duration>> {
 
     companion object {
@@ -26,15 +29,15 @@ class TextStrip(
         val MAX_WIDTH: Double = FreeSpeech.MAX_WIDTH
         val MAX_HEIGHT: Double = FreeSpeech.MAX_HEIGHT
 
+        val BACKGROUND_COLOR: Color = Color.WHITE
+        val TIME_LINE_COLOR: Color = Color.RED
+
         const val DEFAULT_PIXEL_PER_MILLIS: Double = 0.3
 
-        const val TEXTBOX_DEFAULT_TEXT: String = "new text here"
-
-        val LINE_CURRENT_TIME_COLOR: Color = Color.RED
-
-        const val RECTANGLE_NEW_TEXT_WIDTH: Double = 300.0
-
         val CURSOR_NEW_TEXT: Cursor = Cursor.TEXT
+
+        const val TEXTBOX_DEFAULT_TEXT: String = "new text here"
+        const val TEXTBOX_DEFAULT_WIDTH: Double = 300.0
     }
 
 
@@ -43,20 +46,21 @@ class TextStrip(
     private val _foreground: Canvas = Canvas(FreeSpeech.DEFAULT_WIDTH, height).apply {
         setMinSize(MIN_WIDTH, MIN_HEIGHT)
         setMaxSize(MAX_WIDTH, MAX_HEIGHT)
-        background = Background(BackgroundFill(Color(0.0, 1.0, 0.0, 0.5), CornerRadii.EMPTY, Insets.EMPTY))
         isMouseTransparent = true
-            graphicsContext2D.also {
-                it.stroke = LINE_CURRENT_TIME_COLOR
-                it.strokeLine(offset, 0.0, offset, height)
-            }
-        heightProperty().addListener { _, _, _ ->
-            graphicsContext2D.also {
-                it.clearRect(0.0, 0.0, width, this.height)
-                it.stroke = LINE_CURRENT_TIME_COLOR
-                it.strokeLine(offset, 0.0, offset, this.height)
-            }
+        graphicsContext2D.apply {
+            stroke = TIME_LINE_COLOR
+            strokeLine(offset, 0.0, offset, height)
         }
-        heightProperty().bind(this@TextStrip.heightProperty())
+        heightProperty().apply {
+            addListener { _, _, _ ->
+                graphicsContext2D.also {
+                    it.clearRect(0.0, 0.0, width, this@TextStrip.height)
+                    it.stroke = TIME_LINE_COLOR
+                    it.strokeLine(offset, 0.0, offset, this@TextStrip.height)
+                }
+            }
+            bind(this@TextStrip.heightProperty())
+        }
     }
 
 
@@ -72,12 +76,30 @@ class TextStrip(
         }
     }
 
+    val offset: Double = timeLinePosition
+//    var offset: Double
+//        get() {
+//            println("0")
+//            println(offsetProperty == null)
+//            println(offsetProperty.value)
+//            println("1")
+//            return offsetProperty.value
+//        }
+//        set(value) {
+//            offsetProperty.value = value
+//        }
+//    val offsetProperty: DoubleProperty = SimpleDoubleProperty(timeLinePosition).apply {
+//        addListener { _, _, newValue ->
+//            _background.translateX = newValue.toDouble() - pixelLength(currentTime)
+//        }
+//    }
+
     var pixelPerMillis: Double = DEFAULT_PIXEL_PER_MILLIS
 
 
     init {
         alignment = Pos.TOP_LEFT
-        background = Background(BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY))
+        background = Background(BackgroundFill(BACKGROUND_COLOR, CornerRadii.EMPTY, Insets.EMPTY))
         cursor = CURSOR_NEW_TEXT
 
         children.addAll(_background, _foreground)
@@ -87,10 +109,20 @@ class TextStrip(
             when (it.button) {
                 MouseButton.SECONDARY -> {
                     val x = _background.sceneToLocal(it.sceneX, it.sceneY).x
-                    EditStage(write(TEXTBOX_DEFAULT_TEXT, duration(RECTANGLE_NEW_TEXT_WIDTH), duration(x)))
+                    EditStage(write(TEXTBOX_DEFAULT_TEXT, duration(TEXTBOX_DEFAULT_WIDTH), duration(x)))
                 }
                 else -> {}
             }
+        }
+        setOnMouseMoveWhenPressed { eventOnPress, eventOnMove, deltaX, _ ->
+            when (eventOnPress.button) {
+                MouseButton.PRIMARY -> {
+                    currentTime = currentTime.subtract(duration(deltaX))
+                }
+                else -> {}
+            }
+            eventOnPress.consume()
+            eventOnMove.consume()
         }
     }
 
