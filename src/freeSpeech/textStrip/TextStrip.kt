@@ -77,22 +77,6 @@ class TextStrip(
     }
 
     val offset: Double = timeLinePosition
-//    var offset: Double
-//        get() {
-//            println("0")
-//            println(offsetProperty == null)
-//            println(offsetProperty.value)
-//            println("1")
-//            return offsetProperty.value
-//        }
-//        set(value) {
-//            offsetProperty.value = value
-//        }
-//    val offsetProperty: DoubleProperty = SimpleDoubleProperty(timeLinePosition).apply {
-//        addListener { _, _, newValue ->
-//            _background.translateX = newValue.toDouble() - pixelLength(currentTime)
-//        }
-//    }
 
     var pixelPerMillis: Double = DEFAULT_PIXEL_PER_MILLIS
 
@@ -107,7 +91,7 @@ class TextStrip(
 
         setOnMouseClicked {
             when (it.button) {
-                MouseButton.SECONDARY -> {
+                MouseButton.PRIMARY -> {
                     val x = _background.sceneToLocal(it.sceneX, it.sceneY).x
                     EditStage(write(TEXTBOX_DEFAULT_TEXT, duration(TEXTBOX_DEFAULT_WIDTH), duration(x)))
                 }
@@ -116,7 +100,7 @@ class TextStrip(
         }
         setOnMouseMoveWhenPressed { eventOnPress, eventOnMove, deltaX, _ ->
             when (eventOnPress.button) {
-                MouseButton.PRIMARY -> {
+                MouseButton.MIDDLE -> {
                     currentTime = currentTime.subtract(duration(deltaX))
                 }
                 else -> {}

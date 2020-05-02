@@ -10,6 +10,7 @@ import javafx.scene.Scene
 import javafx.scene.control.*
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.*
+import javafx.scene.media.MediaPlayer
 import javafx.scene.paint.Color
 import javafx.stage.FileChooser
 import javafx.stage.Stage
@@ -77,13 +78,24 @@ class FreeSpeech : Application() {
 
 
     //FIELDS
+    private var _timeJob: Job? = null
+        set(value) {
+            field?.cancel()
+            field = value
+        }
+
     private lateinit var _rootStage: Stage
 
-    private val _video = VideoView()
+    private val _video = VideoView().apply {
+        setMinSize(MIN_WIDTH, 0.0)
+        setMaxSize(MAX_WIDTH, MAX_HEIGHT)
+    }
     private val _textStrip: TextStrip = TextStrip(STRIP_DEFAULT_HEIGHT, TIME_BAR_OFFSET).apply {
         currentTimeProperty.addListener { _, _, newValue ->
-            if (_video.currentTime != newValue)
-                _video.currentTime = newValue
+//            if (_video.currentTime != newValue)
+//                _video.currentTime = newValue
+            if (_infoBar.currentTime != newValue)
+                _infoBar.currentTime = newValue
         }
     }
     private val _mainPane = SplitPane().apply {
@@ -98,8 +110,9 @@ class FreeSpeech : Application() {
         currentTimeProperty.addListener { _, _, newValue ->
             if (_video.currentTime != newValue)
                 _video.currentTime = newValue
+//            if (_textStrip.currentTime != newValue)
+//                _textStrip.currentTime = newValue
         }
-//        offsetProperty.bind(_textStrip.offsetProperty)
     }
 
     private var _currentFile: File? = null
@@ -123,21 +136,43 @@ class FreeSpeech : Application() {
                 isFillWidth = true
                 children.addAll(
                         topMenu(),
-                        _mainPane
-//                        _infoBar
+                        _mainPane,
+                        _infoBar
                 )
             })
         }
         _video.apply {
-            fitWidth = width
-            fitWidthProperty.bind(_rootStage.widthProperty())   //TODO
+            widthProperty().addListener { _, _, newValue ->
+                val ratio = ratio
+                if (ratio != null && width < height * ratio)
+                    fitWidth = newValue.toDouble()
+            }
+            heightProperty().addListener { _, _, newValue ->
+                val ratio = ratio
+                if (ratio != null && width > height * ratio)
+                    fitHeight = newValue.toDouble()
+            }
+
             onOpenVideo = { _, newPlayer ->
-                newPlayer?.currentTimeProperty()?.addListener { _, _, newValue ->
-                    if (_textStrip.currentTime != newValue)
-                        _textStrip.currentTime = newValue
-//                    if (_infoBar.currentTime != newValue)
-//                        _infoBar.currentTime = newValue
+                if (newPlayer != null) {
+                    _textStrip.currentTime = newPlayer.currentTime
+                    newPlayer.currentTimeProperty().addListener { _, _, newValue ->
+                        if (_textStrip.currentTime != newValue)
+                            _textStrip.currentTime = newValue
+                    }
+//                    _timeJob = GlobalScope.launch(start = CoroutineStart.LAZY) {
+//                        val thisJob = _timeJob
+//                        while (thisJob == _timeJob) {
+//                            val time = _video.currentTimeProperty?.value
+//                            if (time != null)
+//                                _textStrip.currentTime = time
+//                        }
+//                    }
+                    _timeJob?.start()
                 }
+            }
+            onCloseVideo = {
+                _timeJob = null
             }
         }
         _rootStage.show()

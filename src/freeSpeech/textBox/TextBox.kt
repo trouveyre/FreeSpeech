@@ -70,8 +70,12 @@ class TextBox(
             fill = Color.TRANSPARENT
             stroke = Color.TRANSPARENT
             setOnMouseMoveWhenPressed { eventOnPress, eventOnMove, deltaX, _ ->
-                if (deltaX > FRAME_BORDER_SIZE - frame.width) {
-                    this@TextBox.width += deltaX
+                when (eventOnPress.button) {
+                    MouseButton.MIDDLE -> {
+                        if (deltaX > FRAME_BORDER_SIZE - frame.width)
+                            this@TextBox.width += deltaX
+                    }
+                    else -> {}
                 }
                 eventOnPress.consume()
                 eventOnMove.consume()
@@ -115,7 +119,7 @@ class TextBox(
             cursor = CURSOR_MOVE
             setOnMouseClicked {
                 when (it.button) {
-                    MouseButton.SECONDARY -> {
+                    MouseButton.PRIMARY -> {
                         if (!frame.isLocked)
                             EditStage(this@TextBox)
                     }
@@ -124,7 +128,12 @@ class TextBox(
                 it.consume()
             }
             setOnMouseMoveWhenPressed { eventOnPress, eventOnMove, deltaX, _ ->
-                this@TextBox.x += deltaX
+                when (eventOnPress.button) {
+                    MouseButton.MIDDLE -> {
+                        this@TextBox.x += deltaX
+                    }
+                    else -> {}
+                }
                 eventOnPress.consume()
                 eventOnMove.consume()
             }

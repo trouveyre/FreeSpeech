@@ -124,8 +124,10 @@ class VideoView: StackPane() {
         isPreserveRatio = true
         isSmooth = true
         mediaPlayerProperty().addListener { _, _, newValue ->
-            if (newValue != null)
+            if (newValue != null) {
                 newValue.rate = _comboBoxVideoRate.value
+                _sliderVideoTime.value = newValue.currentTime.toMillis()
+            }
         }
     }
     private val _sliderVideoTime: Slider by lazy {
@@ -152,12 +154,17 @@ class VideoView: StackPane() {
 
     //PROPERTIES
     var currentTime: Duration
-        get() = currentTimeProperty?.value ?: Duration.UNKNOWN
+        get() = _mediaView.mediaPlayer?.currentTime ?: Duration.UNKNOWN
         set(value) {
             _mediaView.mediaPlayer?.seek(value)
         }
     val currentTimeProperty: ReadOnlyProperty<Duration>?
         get() = _mediaView.mediaPlayer?.currentTimeProperty()
+
+    val status: MediaPlayer.Status?
+        get() = statusProperty?.value
+    val statusProperty: ReadOnlyProperty<MediaPlayer.Status>?
+        get() = _mediaView.mediaPlayer?.statusProperty()
 
     var fitWidth: Double
         get() = fitWidthProperty.value
@@ -182,6 +189,14 @@ class VideoView: StackPane() {
         }
     val preserveRatioProperty: BooleanProperty
         get() = _mediaView.preserveRatioProperty()
+    val ratio: Double?
+        get() {
+            val media = _mediaView.mediaPlayer?.media
+            return if (media != null)
+                media.width.toDouble() / media.height
+            else
+                null
+        }
 
     val source: String?
         get() = _mediaView.mediaPlayer?.media?.source
