@@ -1,9 +1,9 @@
 package freeSpeech
 
+import javafx.application.Platform
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
-import javafx.beans.property.Property
-import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.ReadOnlyProperty
 import javafx.geometry.Insets
 import javafx.geometry.Orientation
 import javafx.scene.control.Button
@@ -20,10 +20,10 @@ import javafx.scene.text.FontWeight
 import javafx.scene.text.Text
 import javafx.stage.FileChooser
 import javafx.util.Duration
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 import java.net.URI
-import kotlin.coroutines.CoroutineContext
 
 class VideoView: StackPane() {
 
@@ -51,8 +51,6 @@ class VideoView: StackPane() {
 
 
     //FIELDS
-    private var _timeUpdater: Job? = null
-
     private val _buttonOpen = Button(BUTTON_OPEN_TEXT).apply {
         setOnAction {
             val fileChooser = FileChooser().apply {
@@ -139,8 +137,8 @@ class VideoView: StackPane() {
             orientation = Orientation.HORIZONTAL
             valueProperty().addListener { _, _, newValue ->
                 val time = Duration(newValue.toDouble())
-                if (currentTimeProperty.value != time)
-                    currentTimeProperty.value = time
+                if (currentTime != time)
+                    currentTime = time
             }
         }
     }
@@ -154,19 +152,12 @@ class VideoView: StackPane() {
 
     //PROPERTIES
     var currentTime: Duration
-        get() = currentTimeProperty.value
+        get() = currentTimeProperty?.value ?: Duration.UNKNOWN
         set(value) {
-            currentTimeProperty.value = value
+            _mediaView.mediaPlayer?.seek(value)
         }
-    val currentTimeProperty: Property<Duration> = SimpleObjectProperty(Duration.ZERO).apply {
-        addListener { _, _, newValue ->
-            val millis = newValue.toMillis()
-            if (_sliderVideoTime.value != millis)
-                _sliderVideoTime.value = millis
-            if (_mediaView.mediaPlayer?.currentTime?.equals(newValue) == false)
-                _mediaView.mediaPlayer?.seek(newValue)
-        }
-    }
+    val currentTimeProperty: ReadOnlyProperty<Duration>?
+        get() = _mediaView.mediaPlayer?.currentTimeProperty()
 
     var fitWidth: Double
         get() = fitWidthProperty.value
@@ -209,7 +200,6 @@ class VideoView: StackPane() {
 
     //METHODS
     fun closeVideo() {
-        _timeUpdater?.cancel()
         _mediaView.mediaPlayer?.apply {
             volumeProperty().unbindBidirectional(_sliderVolume.valueProperty())
             dispose()
@@ -223,6 +213,11 @@ class VideoView: StackPane() {
             val oldMediaPlayer = _mediaView.mediaPlayer
             closeVideo()
             _mediaView.mediaPlayer = MediaPlayer(Media(uri.toString())).apply {
+                currentTimeProperty().addListener { _, _, newValue ->
+                    val millis = newValue.toMillis()
+                    if (_sliderVideoTime.value != millis)
+                        _sliderVideoTime.value = millis
+                }
                 setOnEndOfMedia {
                     seek(startTime)
                     pause()
@@ -242,23 +237,16 @@ class VideoView: StackPane() {
                         while (stopTime == Duration.UNKNOWN) {
                             val value = it.value
                             if (value > it.max)
-                                it.max = value
+                                Platform.runLater {
+                                    it.max = value
+                                }
                         }
-                        it.max = stopTime.toMillis()
-                    }
-                }
-                this@VideoView.currentTime = currentTime
-            }
-            _timeUpdater = GlobalScope.launch(start = CoroutineStart.LAZY) {
-                val thisJob = _timeUpdater
-                while (thisJob === _timeUpdater) {
-                    val time = _mediaView.mediaPlayer?.currentTime
-                    if (time != null) {
-                        currentTime = time
+                        Platform.runLater {
+                            it.max = stopTime.toMillis()
+                        }
                     }
                 }
             }
-            _timeUpdater?.start()
             onOpenVideo?.invoke(this@VideoView, oldMediaPlayer, _mediaView.mediaPlayer)
             true
         }
