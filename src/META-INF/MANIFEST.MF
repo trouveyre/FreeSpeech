@@ -1,3 +1,0 @@
-Manifest-Version: 1.01
-Main-Class: freeSpeech.FreeSpeechKt
-
