@@ -9,9 +9,10 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.6")
+    implementation("no.tornado:tornadofx:1.7.20")
 }
 
-val mainClass = "freeSpeech.javafx.FreeSpeech"
+val mainClass = "freeSpeech.Launcher"
 
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {

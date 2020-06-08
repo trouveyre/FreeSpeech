@@ -327,7 +327,3 @@ class FreeSpeech : Application() {
         )
     }
 }
-
-fun main(vararg args: String) {
-    Application.launch(FreeSpeech::class.java, *args)
-}
