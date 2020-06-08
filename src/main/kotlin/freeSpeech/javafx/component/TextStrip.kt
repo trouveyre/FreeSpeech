@@ -6,7 +6,7 @@ import freeSpeech.javafx.FreeSpeech
 import freeSpeech.javafx.setOnMouseMoveWhenPressed
 import freeSpeech.javafx.stage.EditStage
 import freeSpeech.model.TimedText
-import freeSpeech.view.DocumentListener
+import freeSpeech.view.DocumentSynchronised
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Cursor
@@ -22,7 +22,7 @@ import kotlin.time.ExperimentalTime
 class TextStrip(
         height: Double,
         timeLinePosition: Double
-): StackPane(), Iterable<Triple<String, Duration, Duration>>, DocumentListener {
+): StackPane(), Iterable<Triple<String, Duration, Duration>>, DocumentSynchronised {
 
 
     //FIELDS

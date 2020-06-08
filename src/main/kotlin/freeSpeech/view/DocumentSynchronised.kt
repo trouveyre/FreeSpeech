@@ -5,7 +5,7 @@ import kotlin.time.ExperimentalTime
 
 
 @OptIn(ExperimentalTime::class)
-interface DocumentListener {
+interface DocumentSynchronised {
 
 
     //PROPERTIES

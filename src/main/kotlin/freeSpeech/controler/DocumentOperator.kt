@@ -3,7 +3,8 @@ package freeSpeech.controler
 import freeSpeech.model.Document
 import freeSpeech.model.TimedText
 import freeSpeech.model.load
-import freeSpeech.view.DocumentListener
+import freeSpeech.view.DocumentSynchronised
+import javafx.application.Platform
 import kotlinx.coroutines.*
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -15,7 +16,7 @@ class DocumentOperator {
 
 
     //PROPERTIES
-    val listeners = mutableSetOf<DocumentListener>()
+    val listeners = mutableSetOf<DocumentSynchronised>()
 
     private var _document: Document? = null
     val document: Document?
@@ -37,14 +38,14 @@ class DocumentOperator {
             field?.cancel()
             field = value
         }
-    var leader: DocumentListener? = null
+    var leader: DocumentSynchronised? = null
 
     var onNewDocument: ((Document) -> Unit)? = null
     var onOpenDocument: ((Document) -> Unit)? = null
     var onCloseDocument: ((Document) -> Unit)? = null
 
     //METHODS
-    fun setCurrentTime(value: Duration, setter: DocumentListener?) {
+    fun setCurrentTime(value: Duration, setter: DocumentSynchronised?) {
         if (value != _currentTime) {
             _currentTime = value
             listeners.filterNot { it === setter }.forEach {
@@ -79,13 +80,14 @@ class DocumentOperator {
     fun followLeader() {
         val leader = leader
         if (leader != null) {
-            _timeJob = GlobalScope.launch(start = CoroutineStart.LAZY) {
-                val thisJob = _timeJob
-                while (_timeJob === thisJob) {
-                    setCurrentTime(leader.currentTime, leader)
+            _timeJob = GlobalScope.launch {
+                while (isActive) {
+                    Platform.runLater {
+                        setCurrentTime(leader.currentTime, leader)
+                    }
+                    delay(20)
                 }
             }
-            _timeJob?.start()
         }
     }
     fun stopFollowingLeader() {

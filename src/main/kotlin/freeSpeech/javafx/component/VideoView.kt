@@ -1,8 +1,7 @@
 package freeSpeech.javafx.component
 
 import freeSpeech.javafx.FreeSpeech
-import freeSpeech.model.Document
-import freeSpeech.view.DocumentListener
+import freeSpeech.view.DocumentSynchronised
 import javafx.application.Platform
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
@@ -33,7 +32,7 @@ import kotlin.time.milliseconds
 
 
 @OptIn(ExperimentalTime::class)
-class VideoView: StackPane(), DocumentListener {
+class VideoView: StackPane(), DocumentSynchronised {
 
 
     //FIELDS
@@ -125,7 +124,9 @@ class VideoView: StackPane(), DocumentListener {
             orientation = Orientation.HORIZONTAL
             valueProperty().addListener { _, _, newValue ->
                 val time = newValue.toDouble().milliseconds
-                FreeSpeech.DOCUMENT_OPERATOR.setCurrentTime(time, null)
+                if (currentTime != time)
+                    currentTime = time
+                FreeSpeech.DOCUMENT_OPERATOR.setCurrentTime(time, this@VideoView)
             }
         }
     }

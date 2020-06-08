@@ -1,7 +1,7 @@
 package freeSpeech.javafx.component
 
 import freeSpeech.javafx.FreeSpeech
-import freeSpeech.view.DocumentListener
+import freeSpeech.view.DocumentSynchronised
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Insets
@@ -15,7 +15,7 @@ import kotlin.time.*
 
 
 @ExperimentalTime
-class InfoBar(height: Double, timeLinePosition: Double): HBox(), DocumentListener {
+class InfoBar(height: Double, timeLinePosition: Double): HBox(), DocumentSynchronised {
 
 
     //FIELDS
@@ -63,7 +63,4 @@ class InfoBar(height: Double, timeLinePosition: Double): HBox(), DocumentListene
         isFillHeight = true
         offset = timeLinePosition
     }
-
-
-    //METHODS
 }
