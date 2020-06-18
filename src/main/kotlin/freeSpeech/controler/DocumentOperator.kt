@@ -4,8 +4,8 @@ import freeSpeech.model.Document
 import freeSpeech.model.TimedText
 import freeSpeech.model.load
 import freeSpeech.view.DocumentSynchronised
-import javafx.application.Platform
 import kotlinx.coroutines.*
+import kotlinx.coroutines.javafx.JavaFx
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
@@ -82,10 +82,9 @@ class DocumentOperator {
         if (leader != null) {
             _timeJob = GlobalScope.launch {
                 while (isActive) {
-                    Platform.runLater {
+                    withContext(Dispatchers.JavaFx) {
                         setCurrentTime(leader.currentTime, leader)
                     }
-                    delay(20)
                 }
             }
         }

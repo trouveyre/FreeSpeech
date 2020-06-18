@@ -7,7 +7,6 @@ import freeSpeech.javafx.component.VideoView
 import freeSpeech.model.Document
 import freeSpeech.model.save
 import javafx.application.Application
-import javafx.application.Platform
 import javafx.geometry.Insets
 import javafx.geometry.Orientation
 import javafx.geometry.Pos
@@ -20,10 +19,12 @@ import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.FileChooser
 import javafx.stage.Stage
+import kotlinx.coroutines.*
+import kotlinx.coroutines.javafx.JavaFx
 import java.io.File
-import java.net.URI
-import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -128,9 +129,7 @@ class FreeSpeech : Application() {
                 }
                 it.lines.first().apply {
                     forEach { timedText ->
-                        Platform.runLater {
-                            _textStrip.write(timedText)
-                        }
+                        _textStrip.write(timedText)
                     }
                 }
             }

@@ -2,7 +2,6 @@ package freeSpeech.javafx.component
 
 import freeSpeech.javafx.FreeSpeech
 import freeSpeech.view.DocumentSynchronised
-import javafx.application.Platform
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyProperty
@@ -23,8 +22,11 @@ import javafx.scene.text.FontWeight
 import javafx.scene.text.Text
 import javafx.stage.FileChooser
 import javafx.util.Duration
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.URI
 import kotlin.time.ExperimentalTime
@@ -227,7 +229,7 @@ class VideoView: StackPane(), DocumentSynchronised {
         onCloseVideo?.invoke(this, _mediaView.mediaPlayer)
         _mediaView.mediaPlayer = null
     }
-
+ 
     fun openVideo(uri: URI): Boolean {
         return try {
             val oldMediaPlayer = _mediaView.mediaPlayer
@@ -266,11 +268,11 @@ class VideoView: StackPane(), DocumentSynchronised {
                         while (stopTime == Duration.UNKNOWN) {
                             val value = it.value
                             if (value > it.max)
-                                Platform.runLater {
+                                withContext(Dispatchers.JavaFx) {
                                     it.max = value
                                 }
                         }
-                        Platform.runLater {
+                        withContext(Dispatchers.JavaFx) {
                             it.max = stopTime.toMillis()
                         }
                     }
