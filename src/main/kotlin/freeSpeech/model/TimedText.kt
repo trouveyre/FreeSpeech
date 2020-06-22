@@ -59,9 +59,6 @@ class TimedText(
         get() = words.size
 
 
-    constructor(start: Duration, words: MutableList<DecoratedWord>) : this(start, DEFAULT_DURATION, words)
-
-
     //METHODS
     override fun add(index: Int, element: DecoratedWord) = words.add(index, element)
     override fun removeAt(index: Int) = words.removeAt(index)

@@ -2,6 +2,7 @@ package freeSpeech.javafx.component
 
 import freeSpeech.javafx.FreeSpeech
 import freeSpeech.view.DocumentSynchronised
+import javafx.application.Platform
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyProperty
@@ -22,11 +23,8 @@ import javafx.scene.text.FontWeight
 import javafx.scene.text.Text
 import javafx.stage.FileChooser
 import javafx.util.Duration
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.URI
 import kotlin.time.ExperimentalTime
@@ -125,10 +123,12 @@ class VideoView: StackPane(), DocumentSynchronised {
             disableProperty().bind(_mediaView.mediaPlayerProperty().isNull)
             orientation = Orientation.HORIZONTAL
             valueProperty().addListener { _, _, newValue ->
-                val time = newValue.toDouble().milliseconds
-                if (currentTime != time)
-                    currentTime = time
-                FreeSpeech.DOCUMENT_OPERATOR.setCurrentTime(time, this@VideoView)
+                if (shouldSpread) {
+                    shouldSpread = false
+                    FreeSpeech.DOCUMENT_OPERATOR.setCurrentTime(newValue.toDouble().milliseconds, null)
+                }
+                else
+                    shouldSpread = true
             }
         }
     }
@@ -139,12 +139,14 @@ class VideoView: StackPane(), DocumentSynchronised {
         orientation = Orientation.VERTICAL
     }
 
+    private var shouldSpread: Boolean = true
 
     //PROPERTIES
     override var currentTime: kotlin.time.Duration
         get() = (_mediaView.mediaPlayer?.currentTime ?: Duration.UNKNOWN).toMillis().milliseconds
         set(value) {
             _mediaView.mediaPlayer?.seek(Duration(value.inMilliseconds))
+            _sliderVideoTime.value = value.inMilliseconds
         }
 
     val status: MediaPlayer.Status?
@@ -236,9 +238,12 @@ class VideoView: StackPane(), DocumentSynchronised {
             closeVideo()
             _mediaView.mediaPlayer = MediaPlayer(Media(uri.toString())).apply {
                 currentTimeProperty().addListener { _, _, newValue ->
-                    val millis = newValue.toMillis()
-                    if (_sliderVideoTime.value != millis)
-                        _sliderVideoTime.value = millis
+                    if (shouldSpread) {
+                        shouldSpread = false
+                        _sliderVideoTime.value = newValue.toMillis()
+                    }
+                    else
+                        shouldSpread = true
                 }
                 setOnEndOfMedia {
                     seek(startTime)

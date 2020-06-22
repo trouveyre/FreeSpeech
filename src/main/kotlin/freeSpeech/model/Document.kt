@@ -19,7 +19,6 @@ data class Document(
         get() = "$path$name.$EXTENSION"
         set(value) {
             val result = Regex("(.+\\\\)?([^\\\\]+?)(\\.$EXTENSION)?$").find(value)
-            println(result?.groupValues)
             if (result != null) {
                 name = result.groupValues[2]
                 path = result.groupValues[1]

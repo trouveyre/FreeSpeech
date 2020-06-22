@@ -12,10 +12,11 @@ repositories {
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.6")
-//    implementation("no.tornado:tornadofx:1.7.20")
+    implementation("no.tornado:tornadofx:1.7.20")
 }
 
 val mainClass = "freeSpeech.LauncherKt"
+val outputDirectory = "out"
 
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
@@ -25,8 +26,8 @@ tasks {
         }
     }
 
-    register<Jar>("fatJar") {
-        destinationDirectory.set(projectDir.resolve("out/artifacts"))
+    val fatJarTask = register<Jar>("fatJar") {
+        destinationDirectory.set(projectDir.resolve("$outputDirectory/artifacts"))
         archiveVersion.set(project.version.toString())
         manifest {
             attributes["Main-Class"] = mainClass
@@ -39,8 +40,15 @@ tasks {
         })
     }
 
-    register("launcher") {
-        // TODO
+    register("launcher") {  // TODO test
+        doLast {
+            File("$outputDirectory/${project.name}.exe").apply {
+                writeText("""
+                    
+                    java -jar ${fatJarTask.get().archiveFileName}
+                """.trimIndent())
+            }
+        }
     }
 }
 

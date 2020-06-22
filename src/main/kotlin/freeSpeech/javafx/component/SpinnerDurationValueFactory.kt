@@ -8,21 +8,19 @@ import kotlin.time.*
 object SpinnerDurationValueFactory : SpinnerValueFactory<Duration>() {
 
 
-    val DEFAULT_TIME: Duration = Duration.ZERO
-    val TIME_STEP: Duration = 5.milliseconds
+    private val DEFAULT_TIME: Duration = Duration.ZERO
+    private val TIME_STEP: Duration = 0.milliseconds
 
 
     init {
         value = DEFAULT_TIME
         converter = object : StringConverter<Duration>() {
 
-            @OptIn(ExperimentalTime::class)
             override fun fromString(string: String): Duration {
                 val (h, min, s, ms) = string.split(":").map { it.toInt() }
                 return h.hours + min.minutes + s.seconds + ms.milliseconds
             }
 
-            @OptIn(ExperimentalTime::class)
             override fun toString(that: Duration): String {
                 return that.toComponents { hours, minutes, seconds, nanoseconds ->
                     "%02d:%02d:%02d:%03d".format(hours, minutes, seconds, nanoseconds.nanoseconds.inMilliseconds.toInt())

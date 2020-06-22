@@ -2,6 +2,7 @@ package freeSpeech.javafx.component
 
 import freeSpeech.javafx.FreeSpeech
 import freeSpeech.view.DocumentSynchronised
+import javafx.application.Platform
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Insets
@@ -11,6 +12,9 @@ import javafx.scene.layout.BackgroundFill
 import javafx.scene.layout.CornerRadii
 import javafx.scene.layout.HBox
 import javafx.scene.paint.Color
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.runBlocking
 import kotlin.time.*
 
 
@@ -23,11 +27,12 @@ class InfoBar(height: Double, timeLinePosition: Double): HBox(), DocumentSynchro
         Spinner(SpinnerDurationValueFactory).apply {
             minHeight = height
             maxHeight = height
-            editor.textProperty().addListener { _, _, newValue ->
-                val duration = _spinnerTime.valueFactory.converter.fromString(newValue)
-                if (FreeSpeech.DOCUMENT_OPERATOR.currentTime != duration)
-                    FreeSpeech.DOCUMENT_OPERATOR.setCurrentTime(duration, this@InfoBar)
-            }
+            isEditable = false
+//            editor.textProperty().addListener { _, _, newValue -> //TODO Bring lags
+//                val duration = _spinnerTime.valueFactory.converter.fromString(newValue)
+//                if (FreeSpeech.DOCUMENT_OPERATOR.currentTime != duration)
+//                    FreeSpeech.DOCUMENT_OPERATOR.setCurrentTime(duration, this@InfoBar)
+//            }
         }
     }
 

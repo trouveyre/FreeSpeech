@@ -7,6 +7,7 @@ import freeSpeech.javafx.setOnMouseMoveWhenPressed
 import freeSpeech.javafx.stage.EditStage
 import freeSpeech.model.TimedText
 import freeSpeech.view.DocumentSynchronised
+import javafx.application.Platform
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Cursor
@@ -14,6 +15,11 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.javafx.JavaFxDispatcher
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -64,6 +70,7 @@ class TextStrip(
         cursor = CURSOR_NEW_TEXT
 
         children.addAll(_background, _foreground)
+        _background.translateX = offset
 
         setOnMouseClicked {
             when (it.button) {
@@ -77,7 +84,7 @@ class TextStrip(
         setOnMouseMoveWhenPressed { eventOnPress, eventOnMove, deltaX, _ ->
             when (eventOnPress.button) {
                 MouseButton.PRIMARY -> {
-                    FreeSpeech.DOCUMENT_OPERATOR.setCurrentTime(currentTime - deltaX.pixelsToMilliseconds(), this)
+                    FreeSpeech.DOCUMENT_OPERATOR.setCurrentTime(currentTime - deltaX.pixelsToMilliseconds(), null)
                 }
                 else -> {}
             }
