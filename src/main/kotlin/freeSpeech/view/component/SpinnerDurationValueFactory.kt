@@ -1,4 +1,4 @@
-package freeSpeech.javafx.component
+package freeSpeech.view.component
 
 import javafx.scene.control.SpinnerValueFactory
 import javafx.util.StringConverter

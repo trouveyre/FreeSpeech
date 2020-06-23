@@ -1,6 +1,6 @@
-package freeSpeech.javafx.view
+package freeSpeech.view.view
 
-import freeSpeech.javafx.component.TextBox
+import freeSpeech.view.component.TextBox
 import freeSpeech.model.millisecondsToPixels
 import freeSpeech.model.pixelsToMilliseconds
 import javafx.geometry.Insets

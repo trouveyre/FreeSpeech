@@ -1,8 +1,8 @@
-package freeSpeech.javafx.component
+package freeSpeech.view.component
 
-import freeSpeech.javafx.setOnMouseMoveWhenPressed
-import freeSpeech.javafx.view.EditTextView
-import freeSpeech.javafx.view.PrimaryView
+import freeSpeech.view.setOnMouseMoveWhenPressed
+import freeSpeech.view.view.EditTextView
+import freeSpeech.view.view.PrimaryView
 import freeSpeech.model.DecoratedWord
 import freeSpeech.model.TimedText
 import freeSpeech.model.millisecondsToPixels

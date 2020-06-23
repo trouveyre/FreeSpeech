@@ -1,12 +1,11 @@
-package freeSpeech.javafx
+package freeSpeech.view
 
-import freeSpeech.javafx.view.PrimaryView
+import freeSpeech.view.view.PrimaryView
 import freeSpeech.model.DocumentOperator
 import javafx.scene.Node
 import javafx.scene.control.Alert
 import javafx.scene.input.MouseEvent
 import tornadofx.App
-import java.nio.file.Paths
 import kotlin.time.ExperimentalTime
 
 

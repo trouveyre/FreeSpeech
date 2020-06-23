@@ -1,6 +1,6 @@
 package freeSpeech.model
 
-import freeSpeech.javafx.FreeSpeech
+import freeSpeech.view.FreeSpeech
 import javafx.scene.control.Alert
 import java.io.File
 

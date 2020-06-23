@@ -1,6 +1,5 @@
 package freeSpeech.model
 
-import freeSpeech.view.DocumentSynchronised
 import kotlinx.coroutines.*
 import kotlinx.coroutines.javafx.JavaFx
 import kotlin.time.Duration

@@ -1,7 +1,7 @@
-package freeSpeech.javafx.component
+package freeSpeech.view.component
 
-import freeSpeech.javafx.FreeSpeech
-import freeSpeech.view.DocumentSynchronised
+import freeSpeech.view.FreeSpeech
+import freeSpeech.model.DocumentSynchronised
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyProperty

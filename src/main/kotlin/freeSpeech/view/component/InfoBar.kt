@@ -1,8 +1,7 @@
-package freeSpeech.javafx.component
+package freeSpeech.view.component
 
-import freeSpeech.javafx.FreeSpeech
-import freeSpeech.view.DocumentSynchronised
-import javafx.application.Platform
+import freeSpeech.view.FreeSpeech
+import freeSpeech.model.DocumentSynchronised
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Insets
@@ -12,9 +11,6 @@ import javafx.scene.layout.BackgroundFill
 import javafx.scene.layout.CornerRadii
 import javafx.scene.layout.HBox
 import javafx.scene.paint.Color
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.runBlocking
 import kotlin.time.*
 
 

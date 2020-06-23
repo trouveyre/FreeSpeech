@@ -1,9 +1,9 @@
-package freeSpeech.javafx.view
+package freeSpeech.view.view
 
-import freeSpeech.javafx.FreeSpeech
-import freeSpeech.javafx.component.InfoBar
-import freeSpeech.javafx.component.TextStrip
-import freeSpeech.javafx.component.VideoPlayer
+import freeSpeech.view.FreeSpeech
+import freeSpeech.view.component.InfoBar
+import freeSpeech.view.component.TextStrip
+import freeSpeech.view.component.VideoPlayer
 import freeSpeech.model.Document
 import javafx.geometry.Insets
 import javafx.geometry.Orientation

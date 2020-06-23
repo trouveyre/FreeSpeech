@@ -1,4 +1,4 @@
-package freeSpeech.javafx.component
+package freeSpeech.view.component
 
 import freeSpeech.model.DecoratedWord
 import javafx.scene.Cursor

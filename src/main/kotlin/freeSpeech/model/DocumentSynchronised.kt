@@ -1,4 +1,4 @@
-package freeSpeech.view
+package freeSpeech.model
 
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime

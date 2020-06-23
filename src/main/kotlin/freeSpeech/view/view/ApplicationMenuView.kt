@@ -1,7 +1,7 @@
-package freeSpeech.javafx.view
+package freeSpeech.view.view
 
-import freeSpeech.javafx.FreeSpeech
-import freeSpeech.javafx.toDoAlert
+import freeSpeech.view.FreeSpeech
+import freeSpeech.view.toDoAlert
 import freeSpeech.model.Document
 import freeSpeech.model.save
 import javafx.scene.Parent

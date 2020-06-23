@@ -1,6 +1,6 @@
 package freeSpeech
 
-import freeSpeech.javafx.FreeSpeech
+import freeSpeech.view.FreeSpeech
 import tornadofx.*
 
 fun main() {
