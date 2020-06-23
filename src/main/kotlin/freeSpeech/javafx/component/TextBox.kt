@@ -1,11 +1,12 @@
 package freeSpeech.javafx.component
 
-import freeSpeech.controler.millisecondsToPixels
-import freeSpeech.controler.pixelsToMilliseconds
 import freeSpeech.javafx.setOnMouseMoveWhenPressed
-import freeSpeech.javafx.stage.EditStage
+import freeSpeech.javafx.view.EditTextView
+import freeSpeech.javafx.view.PrimaryView
 import freeSpeech.model.DecoratedWord
 import freeSpeech.model.TimedText
+import freeSpeech.model.millisecondsToPixels
+import freeSpeech.model.pixelsToMilliseconds
 import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.scene.Cursor
 import javafx.scene.canvas.Canvas
@@ -14,6 +15,7 @@ import javafx.scene.layout.AnchorPane
 import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.scene.text.Text
+import tornadofx.FX.Companion.find
 import kotlin.time.ExperimentalTime
 
 
@@ -63,7 +65,7 @@ class TextBox(val timedText: TimedText, heightObservable: ReadOnlyDoubleProperty
         setOnMouseClicked {
             when (it.button) {
                 MouseButton.SECONDARY -> {
-                    EditStage(this)
+                    find<PrimaryView>().openInternalWindow(EditTextView(this))
                 }
                 else -> {}
             }
@@ -78,7 +80,7 @@ class TextBox(val timedText: TimedText, heightObservable: ReadOnlyDoubleProperty
                     }
                     else {
                         val result = eventOnDrag.x + FRAME_BORDER_SIZE / 2
-                        if (result > EditStage.TEXTBOX_EDITING_MIN_SIZE)
+                        if (result > EditTextView.TEXTBOX_EDITING_MIN_SIZE)
                             timedText.duration = result.pixelsToMilliseconds()
                     }
                 }

@@ -1,8 +1,5 @@
-package freeSpeech.controler
+package freeSpeech.model
 
-import freeSpeech.model.Document
-import freeSpeech.model.TimedText
-import freeSpeech.model.load
 import freeSpeech.view.DocumentSynchronised
 import kotlinx.coroutines.*
 import kotlinx.coroutines.javafx.JavaFx

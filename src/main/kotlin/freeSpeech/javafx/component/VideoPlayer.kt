@@ -2,7 +2,6 @@ package freeSpeech.javafx.component
 
 import freeSpeech.javafx.FreeSpeech
 import freeSpeech.view.DocumentSynchronised
-import javafx.application.Platform
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyProperty
@@ -32,7 +31,7 @@ import kotlin.time.milliseconds
 
 
 @OptIn(ExperimentalTime::class)
-class VideoView: StackPane(), DocumentSynchronised {
+class VideoPlayer: StackPane(), DocumentSynchronised {
 
 
     //FIELDS
@@ -141,6 +140,7 @@ class VideoView: StackPane(), DocumentSynchronised {
 
     private var shouldSpread: Boolean = true
 
+
     //PROPERTIES
     override var currentTime: kotlin.time.Duration
         get() = (_mediaView.mediaPlayer?.currentTime ?: Duration.UNKNOWN).toMillis().milliseconds
@@ -189,10 +189,10 @@ class VideoView: StackPane(), DocumentSynchronised {
     val source: String?
         get() = _mediaView.mediaPlayer?.media?.source
 
-    var onCloseVideo: (VideoView.(oldPlayer: MediaPlayer?) -> Unit)? = null
-    var onOpenVideo: (VideoView.(oldPlayer: MediaPlayer?, newPlayer: MediaPlayer?) -> Unit)? = null
-    var onPlayVideo: (VideoView.(player: MediaPlayer) -> Unit)? = null
-    var onPauseVideo: (VideoView.(player: MediaPlayer) -> Unit)? = null
+    var onCloseVideo: (VideoPlayer.(oldPlayer: MediaPlayer?) -> Unit)? = null
+    var onOpenVideo: (VideoPlayer.(oldPlayer: MediaPlayer?, newPlayer: MediaPlayer?) -> Unit)? = null
+    var onPlayVideo: (VideoPlayer.(player: MediaPlayer) -> Unit)? = null
+    var onPauseVideo: (VideoPlayer.(player: MediaPlayer) -> Unit)? = null
 
 
     init {
@@ -252,11 +252,11 @@ class VideoView: StackPane(), DocumentSynchronised {
                 statusProperty().addListener { _, _, newValue ->
                     _buttonPlayPause.text = when (newValue) {
                         MediaPlayer.Status.PAUSED -> {
-                            onPauseVideo?.invoke(this@VideoView, this)
+                            onPauseVideo?.invoke(this@VideoPlayer, this)
                             BUTTON_PLAY_TEXT_PLAY
                         }
                         MediaPlayer.Status.PLAYING -> {
-                            onPlayVideo?.invoke(this@VideoView, this)
+                            onPlayVideo?.invoke(this@VideoPlayer, this)
                             BUTTON_PLAY_TEXT_PAUSE
                         }
                         MediaPlayer.Status.STOPPED -> {
@@ -283,13 +283,14 @@ class VideoView: StackPane(), DocumentSynchronised {
                     }
                 }
             }
-            onOpenVideo?.invoke(this@VideoView, oldMediaPlayer, _mediaView.mediaPlayer)
+            onOpenVideo?.invoke(this@VideoPlayer, oldMediaPlayer, _mediaView.mediaPlayer)
             true
         }
         catch (e: Exception) {
             false
         }
     }
+
 
     companion object {
         const val MIN_WIDTH: Double = FreeSpeech.MIN_WIDTH

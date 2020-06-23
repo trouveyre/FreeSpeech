@@ -1,13 +1,13 @@
 package freeSpeech.javafx.component
 
-import freeSpeech.controler.pixelsToMilliseconds
-import freeSpeech.controler.millisecondsToPixels
 import freeSpeech.javafx.FreeSpeech
 import freeSpeech.javafx.setOnMouseMoveWhenPressed
-import freeSpeech.javafx.stage.EditStage
+import freeSpeech.javafx.view.EditTextView
+import freeSpeech.javafx.view.PrimaryView
 import freeSpeech.model.TimedText
+import freeSpeech.model.millisecondsToPixels
+import freeSpeech.model.pixelsToMilliseconds
 import freeSpeech.view.DocumentSynchronised
-import javafx.application.Platform
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Cursor
@@ -15,11 +15,7 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.javafx.JavaFxDispatcher
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import tornadofx.*
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -76,7 +72,7 @@ class TextStrip(
             when (it.button) {
                 MouseButton.SECONDARY -> {
                     val x = _background.sceneToLocal(it.sceneX, it.sceneY).x
-                    EditStage(write(TimedText(x.pixelsToMilliseconds())))
+                    find<PrimaryView>().openInternalWindow(EditTextView(write(TimedText(x.pixelsToMilliseconds()))))
                 }
                 else -> {}
             }

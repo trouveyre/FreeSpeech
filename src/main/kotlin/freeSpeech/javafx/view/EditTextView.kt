@@ -1,24 +1,25 @@
-package freeSpeech.javafx.stage
+package freeSpeech.javafx.view
 
-import freeSpeech.controler.millisecondsToPixels
-import freeSpeech.controler.pixelsToMilliseconds
 import freeSpeech.javafx.component.TextBox
+import freeSpeech.model.millisecondsToPixels
+import freeSpeech.model.pixelsToMilliseconds
 import javafx.geometry.Insets
 import javafx.geometry.Pos
-import javafx.scene.Scene
+import javafx.scene.Parent
 import javafx.scene.control.Button
-import javafx.scene.control.Label
 import javafx.scene.control.Spinner
 import javafx.scene.control.TextArea
-import javafx.scene.layout.*
+import javafx.scene.layout.AnchorPane
+import javafx.scene.layout.Background
+import javafx.scene.layout.BackgroundFill
+import javafx.scene.layout.CornerRadii
 import javafx.scene.paint.Color
-import javafx.stage.Stage
-import javafx.stage.StageStyle
+import tornadofx.*
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
-class EditStage(val textBox: TextBox): Stage(StageStyle.UNDECORATED) {
+class EditTextView(val textBox: TextBox) : Fragment() {
 
     //FIELDS
     private val _savedText: String = textBox.timedText.text
@@ -106,39 +107,25 @@ class EditStage(val textBox: TextBox): Stage(StageStyle.UNDECORATED) {
     }
 
 
-    init {
-        scene = Scene(VBox().apply {
-            alignment = Pos.TOP_CENTER
-            background = Background(BackgroundFill(Color.STEELBLUE, CornerRadii.EMPTY, Insets.EMPTY))
-            children.addAll(
-                    HBox(Label("start time:"), _spinnerLocationText, Label("duration:"), _spinnerSizeText).apply {
-                        alignment = Pos.BOTTOM_CENTER
-                        spacing = 10.0
-                    },
-                    _textArea,
-                    HBox(_buttonApply, _buttonCancel, _buttonDelete).apply {
-                        alignment = Pos.CENTER
-                        spacing = BUTTON_SPACING
-                    }
-            )
-        })
-        centerOnScreen()
-        setOnCloseRequest { onClose() }
-        show()
-        _textArea.requestFocus()
+    //PROPERTIES
+    override val root: Parent = vbox(alignment = Pos.TOP_CENTER) {
 
-        textBox.showFrame(TEXTBOX_EDITING_COLOR)
-    }
+        hbox(spacing = 10, alignment = Pos.BOTTOM_CENTER) {
+            label("start time:")
+            add(_spinnerLocationText)
+            label("duration:")
+            add(_spinnerSizeText)
+        }
 
+        add(_textArea)
 
-    //METHODS
-    override fun close() {
-        onClose()
-        super.close()
-    }
+        hbox(spacing = BUTTON_SPACING, alignment = Pos.CENTER) {
+            add(_buttonApply)
+            add(_buttonCancel)
+            add(_buttonDelete)
+        }
 
-    private fun onClose() {
-        textBox.hideFrame()
+        background = Background(BackgroundFill(Color.STEELBLUE, CornerRadii.EMPTY, Insets.EMPTY))
     }
 
 

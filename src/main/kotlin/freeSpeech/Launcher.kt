@@ -1,8 +1,8 @@
 package freeSpeech
 
 import freeSpeech.javafx.FreeSpeech
-import javafx.application.Application
+import tornadofx.*
 
 fun main() {
-    Application.launch(FreeSpeech::class.java)
+    launch<FreeSpeech>()
 }
