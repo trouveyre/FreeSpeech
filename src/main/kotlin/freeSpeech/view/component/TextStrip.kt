@@ -72,7 +72,9 @@ class TextStrip(
             when (it.button) {
                 MouseButton.SECONDARY -> {
                     val x = _background.sceneToLocal(it.sceneX, it.sceneY).x
-                    find<PrimaryView>().openInternalWindow(EditTextView(write(TimedText(x.pixelsToMilliseconds()))))
+                    find<PrimaryView>().openInternalWindow(
+                            EditTextView(write(TimedText(x.pixelsToMilliseconds())))
+                    )
                 }
                 else -> {}
             }

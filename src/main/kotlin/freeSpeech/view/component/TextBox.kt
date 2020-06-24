@@ -1,89 +1,52 @@
 package freeSpeech.view.component
 
-import freeSpeech.view.setOnMouseMoveWhenPressed
-import freeSpeech.view.view.EditTextView
-import freeSpeech.view.view.PrimaryView
-import freeSpeech.model.DecoratedWord
 import freeSpeech.model.TimedText
 import freeSpeech.model.millisecondsToPixels
 import freeSpeech.model.pixelsToMilliseconds
+import freeSpeech.view.setOnMouseMoveWhenPressed
+import freeSpeech.view.view.EditTextView
+import freeSpeech.view.view.PrimaryView
 import javafx.beans.property.ReadOnlyDoubleProperty
+import javafx.geometry.Insets
 import javafx.scene.Cursor
-import javafx.scene.canvas.Canvas
 import javafx.scene.input.MouseButton
-import javafx.scene.layout.AnchorPane
+import javafx.scene.layout.Background
+import javafx.scene.layout.BackgroundFill
+import javafx.scene.layout.CornerRadii
+import javafx.scene.layout.HBox
 import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.scene.text.Text
+import tornadofx.*
 import tornadofx.FX.Companion.find
 import kotlin.time.ExperimentalTime
 
 
 @OptIn(ExperimentalTime::class)
-class TextBox(val timedText: TimedText, heightObservable: ReadOnlyDoubleProperty): Canvas() {
+class TextBox(val timedText: TimedText, heightObservable: ReadOnlyDoubleProperty): HBox() {
 
-
-    //FIELDS
-    private val _decorators = mutableSetOf<WordDecorator>()
-    private var _shownFrameColor: Color? = null
-
-
-    init {
-        timedText.onTextChanged = { _, _ ->
-            repaint()
-        }
-
-        timedText.onDurationChanged = { _, newValue ->
-            width = newValue.millisecondsToPixels()
-            repaint()
-        }
-        width = timedText.duration.millisecondsToPixels()
-        height = heightObservable.value
-        heightObservable.addListener { _, _, newValue ->
-            height = newValue.toDouble()
-            repaint()
-        }
-        DecoratedWord.onAnySizeFactorChanged = { _, _ ->
-            repaint()
-        }
-
-        timedText.onStartTimeChanged = { _, newValue ->
-            layoutX = newValue.millisecondsToPixels()
-        }
-        layoutX = timedText.startTime.millisecondsToPixels()
-
-        repaint()
-
-        hoverProperty().addListener { _, _, newValue ->
-            if (newValue && _shownFrameColor == null)
-                showFrame()
-            else if (!newValue && _shownFrameColor == FRAME_DEFAULT_COLOR)
-                hideFrame()
-        }
-        cursor = CURSOR
-
-        setOnMouseClicked {
-            when (it.button) {
-                MouseButton.SECONDARY -> {
-                    find<PrimaryView>().openInternalWindow(EditTextView(this))
-                }
-                else -> {}
-            }
-            it.consume()
-        }
+    private val _textArea = anchorpane {
+        cursor = TEXT_AREA_CURSOR
         setOnMouseMoveWhenPressed { eventOnPress, eventOnDrag, deltaX, _ ->
             when (eventOnPress.button) {
-                MouseButton.PRIMARY -> {
-                    if (eventOnDrag.x < width - FRAME_BORDER_SIZE) {
-                        timedText.startTime += deltaX.pixelsToMilliseconds()
-                        _decorators.forEach { it.x += deltaX }
-                    }
-                    else {
-                        val result = eventOnDrag.x + FRAME_BORDER_SIZE / 2
-                        if (result > EditTextView.TEXTBOX_EDITING_MIN_SIZE)
-                            timedText.duration = result.pixelsToMilliseconds()
-                    }
+                MouseButton.PRIMARY -> timedText.startTime += deltaX.pixelsToMilliseconds()
+                else -> {
                 }
+            }
+            eventOnPress.consume()
+            eventOnDrag.consume()
+        }
+    }
+
+    private val _stretchingArea = rectangle {
+        cursor = STRETCHING_AREA_CURSOR
+        fill = Color.TRANSPARENT
+        stroke= Color.TRANSPARENT
+        width = STRETCHING_AREA_WIDTH
+        heightProperty().bind(heightObservable)
+        setOnMouseMoveWhenPressed { eventOnPress, eventOnDrag, deltaX, _ ->
+            when (eventOnPress.button) {
+                MouseButton.PRIMARY -> timedText.duration += deltaX.pixelsToMilliseconds()
                 else -> {}
             }
             eventOnPress.consume()
@@ -92,60 +55,90 @@ class TextBox(val timedText: TimedText, heightObservable: ReadOnlyDoubleProperty
     }
 
 
-    //METHODS
-    fun repaint() {
-        graphicsContext2D.apply {
-            (parent as? AnchorPane)?.children?.removeAll(_decorators)
-            _decorators.clear()
-            clearRect(0.0, 0.0, width, height)
-            val defaultFontSize = timedText.text.getFontSizeForWidth(width)
-            val spaceSize = " ".getWidthForFontSize(defaultFontSize)
-            val wordPerSizeFactorUnit = timedText.count() / timedText.fold(0.0) { acc, word -> acc + word.sizeFactor }
-            var x = 0.0
-            fill = TEXT_DEFAULT_COLOR
-            timedText.forEach { word ->
-                val defaultWidth = word.text.getWidthForFontSize(defaultFontSize)
-                val wordWidth = defaultWidth * word.sizeFactor * wordPerSizeFactorUnit
-                font = Font.font(word.text.getFontSizeForWidth(wordWidth))
-                fillText(word.text, x, height / 2, wordWidth)
-                _decorators.add(WordDecorator(this@TextBox, word, layoutX + x, wordWidth))
-                x += wordWidth + spaceSize
+    init {
+        timedText.onTextChanged = { _, _ ->
+            drawText()
+        }
+        timedText.onDurationChanged = { _, _ ->
+            drawText()
+        }
+
+        timedText.onStartTimeChanged = { _, newValue ->
+            layoutX = newValue.millisecondsToPixels()
+        }
+        layoutX = timedText.startTime.millisecondsToPixels()
+
+        onHover { isHovering ->
+            if (isHovering)
+                showFrame()
+            else
+                hideFrame()
+        }
+        setOnMouseClicked {
+            when (it.button) {
+                MouseButton.SECONDARY -> {
+                    find<PrimaryView>().openInternalWindow(
+                            EditTextView(this)
+                    )
+                }
+                else -> {}
             }
-            val frameColor = _shownFrameColor
-            if (frameColor != null)
-                showFrame(frameColor)
+            it.consume()
+        }
+
+        drawText()
+    }
+
+
+    private fun drawText() {
+        _textArea.children.clear()
+        val totalWidth = timedText.duration.millisecondsToPixels()
+        val defaultFontSize = timedText.text.getFontSizeForWidth(totalWidth)
+        val spaceSize = " ".getWidthForFontSize(defaultFontSize)
+        val wordPerSizeFactorUnit = timedText.count() / timedText.fold(0.0) { acc, word -> acc + word.sizeFactor }
+        var x = 0.0
+        timedText.forEach { word ->
+            val wordFontSize = defaultFontSize * word.sizeFactor * wordPerSizeFactorUnit
+            _textArea.add(WordBox(word).apply {
+                fill = TEXT_DEFAULT_COLOR
+                font = Font.font(wordFontSize)
+                this.x = x
+                this.y = _stretchingArea.height / 2
+                decoratedWord.onSizeFactorChanged = { _, _ -> drawText() }
+            })
+            x += word.text.getWidthForFontSize(wordFontSize) + spaceSize
         }
     }
+
     fun showFrame(color: Color = FRAME_DEFAULT_COLOR) {
-        graphicsContext2D.apply {
-            fill = color.deriveColor(0.0, 1.0, 1.0, FRAME_FILL_COLOR_OPACITY)
-            fillRect(0.0, 0.0, width, height)
-            stroke = color
-            strokeRect(0.0, 0.0, width, height)
-        }
-        _shownFrameColor = color
-        val parent = (parent as? AnchorPane)
-        parent?.children?.addAll(_decorators.filterNot { it in parent.children })
+        if (background?.equals(Background.EMPTY) != false || background?.fills?.first()?.fill == FRAME_DEFAULT_COLOR.deriveColor(0.0, 1.0, 1.0, FRAME_FILL_COLOR_OPACITY))
+            _textArea.background = Background(BackgroundFill(
+                    color.deriveColor(0.0, 1.0, 1.0, FRAME_FILL_COLOR_OPACITY),
+                    CornerRadii.EMPTY,
+                    Insets.EMPTY
+            ))
     }
     fun hideFrame() {
-        _shownFrameColor = null
-        repaint()
+        _textArea.background = Background.EMPTY
     }
 
 
     companion object {
-        val TEXT_DEFAULT_COLOR: Color = Color.BLACK
         val FRAME_DEFAULT_COLOR: Color = Color.FORESTGREEN
-        const val FRAME_FILL_COLOR_OPACITY: Double = 0.4
-        const val FRAME_BORDER_SIZE: Double = 24.0
+        const val FRAME_FILL_COLOR_OPACITY: Double = 0.6
 
-        val CURSOR: Cursor = Cursor.MOVE
+        val STRETCHING_AREA_CURSOR: Cursor = Cursor.H_RESIZE
+        const val STRETCHING_AREA_WIDTH: Double = 5.0
+
+        val TEXT_AREA_CURSOR: Cursor = Cursor.MOVE
+
+        val TEXT_DEFAULT_COLOR: Color = Color.BLACK
     }
 }
 
 
-fun String.getFontSizeForWidth(width: Double): Double {
-    return width * 25 / getWidthForFontSize(25.0)
+fun String.getFontSizeForWidth(width: Double, reference: Double = 100.0): Double {
+    return width * reference / getWidthForFontSize(reference)
 }
 
 fun String.getWidthForFontSize(fontSize: Double): Double {

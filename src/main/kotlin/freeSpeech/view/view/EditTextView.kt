@@ -55,11 +55,12 @@ class EditTextView(val textBox: TextBox) : Fragment() {
     }
     private val _buttonDelete: Button = Button(BUTTON_DELETE_TEXT).apply {
         hoverProperty().addListener { _, _, newValue ->
-            textBox.opacity = if (newValue) 0.3 else 1.0
-            if (newValue)
-                textBox.hideFrame()
-            else
-                textBox.showFrame(TEXTBOX_EDITING_COLOR)
+            textBox.opacity = if (newValue) {
+                BUTTON_DELETE_OPACITY
+            }
+            else {
+                1.0
+            }
         }
         setOnAction {
             val parent = textBox.parent as? AnchorPane
@@ -133,6 +134,7 @@ class EditTextView(val textBox: TextBox) : Fragment() {
         const val BUTTON_APPLY_TEXT: String = "APPLY"
         const val BUTTON_CANCEL_TEXT: String = "CANCEL"
         const val BUTTON_DELETE_TEXT: String = "DELETE"
+        const val BUTTON_DELETE_OPACITY: Double = 0.3
         const val BUTTON_SPACING: Double = 20.0
 
         val TEXTBOX_EDITING_COLOR: Color = Color.STEELBLUE
